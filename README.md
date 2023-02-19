@@ -1,4 +1,4 @@
-# ExVectrHAL
+# ExVectrSensor
 Part of the ExVeCtr project. 
 ExVectrSensor offers multiple sensor interface classes and sensor implementations. 
 
