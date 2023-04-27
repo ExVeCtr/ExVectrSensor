@@ -1,18 +1,41 @@
-#ifndef EXVECTRHAL_UTILITIES_TIMEHAL_H
-#define EXVECTRHAL_UTILITIES_TIMEHAL_H
+#ifndef EXVECTRSENSOR_BAROMETER_H
+#define EXVECTRSENSOR_BAROMETER_H
 
-#include "stdint.h"
+#include "ExVectrCore/topic.hpp"
+#include "ExVectrCore/timestamped.hpp"
+#include "ExVectrData/value_covariance.hpp"
 
 namespace VCTR
 {
 
-    /**
-     * @brief A function to get the system time since start in nanoseconds.
-     * @note Will overflow after ~292.47 years. If a deployed system runs longer then that and crashes then give me a call.
-     *  
-     * @returns time since system start in nanoseconds.
-     */
-    extern int64_t internalTime();
+    namespace SNSR
+    {
+
+        /**
+         * @brief An abstract class for barometers. Allows things like sensorfusion to use any barometer class so long this is inhereted from.
+         */
+        class Barometer
+        {
+        protected:
+            /// @brief Topic to which new barometer values should be published in Pascal in sensor frame.
+            Core::Topic<Core::Timestamped<Data::ValueCov<float, 1>>> baroTopic_;
+
+        public:
+            /**
+             * @brief Gets the barometer topic where new barometer values are published in Pascal in sensor frame.
+             * @returns barometer topic.
+             */
+            const Core::Topic<Core::Timestamped<Data::ValueCov<float, 1>>> &getBaroTopic() const;
+
+            /**
+             * @brief Makes the sensor read the barometer and publish the sensor values.
+             * @note Implemented by child class.
+             * @return true if reading was successfull. False otherwise.
+             */
+            virtual bool readBaro() = 0;
+        };
+
+    }
 
 }
 
