@@ -1,26 +1,21 @@
 
 /**
  * Credit for original implementation to:
- * 
+ *
  * Brian R Taylor
  * brian.taylor@bolderflight.com
  * Copyright (c) 2021 Bolder Flight Systems Inc
- * 
+ *
  * Original implementation: https://github.com/bolderflight/invensense-imu
- * 
+ *
  * Heavily modified for use with the ExVectrSensor library with extra features.
- * 
- * 
-*/
-
+ *
+ *
+ */
 
 #ifndef EXVECTRSENSOR_MPU9250_H
 #define EXVECTRSENSOR_MPU9250_H
 
-#include "ExVectrCore/print.hpp"
-
-#include "ExVectrHAL/io_types.hpp"
-#include "ExVectrHAL/io_params.hpp"
 #include "ExVectrHAL/io.hpp"
 
 #include "../gyroscope.hpp"
@@ -40,14 +35,13 @@ namespace VCTR
         class MPU9250 : public Gyroscope, public Accelerometer, public Magnetometer
         {
         private:
-
-            HAL::IO* ioBus_ = nullptr;
+            HAL::IO *ioBus_ = nullptr;
 
             bool initialised_ = false;
 
         public:
-
-            enum DlpfBandwidth : uint8_t {
+            enum DlpfBandwidth : uint8_t
+            {
                 DLPF_BANDWIDTH_250HZ_4kHz = 0x00,
                 DLPF_BANDWIDTH_184HZ = 0x01,
                 DLPF_BANDWIDTH_92HZ = 0x02,
@@ -57,13 +51,15 @@ namespace VCTR
                 DLPF_BANDWIDTH_5HZ = 0x06,
                 DLPF_BANDWIDTH_DISABLE_32kHz = 0xAA
             };
-            enum AccelRange : uint8_t {
+            enum AccelRange : uint8_t
+            {
                 ACCEL_RANGE_2G = 0x00,
                 ACCEL_RANGE_4G = 0x08,
                 ACCEL_RANGE_8G = 0x10,
                 ACCEL_RANGE_16G = 0x18
             };
-            enum GyroRange : uint8_t {
+            enum GyroRange : uint8_t
+            {
                 GYRO_RANGE_250DPS = 0x00,
                 GYRO_RANGE_500DPS = 0x08,
                 GYRO_RANGE_1000DPS = 0x10,
@@ -103,34 +99,33 @@ namespace VCTR
             bool readAll();
 
         private:
-
             /**
              * Below are all registers and extra functions.
-            */
+             */
             bool Begin(bool disableMag = false);
-            bool MagnetometerFailed() {return akFailure_;}
-            bool IMUFailed() {return mpuFailure_ || akFailure_;}
+            bool MagnetometerFailed() { return akFailure_; }
+            bool IMUFailed() { return mpuFailure_ || akFailure_; }
             bool EnableDrdyInt();
             bool DisableDrdyInt();
             bool ConfigAccelRange(const AccelRange range);
-            inline AccelRange accel_range() const {return accel_range_;}
+            inline AccelRange accel_range() const { return accel_range_; }
             bool ConfigGyroRange(const GyroRange range);
-            inline GyroRange gyro_range() const {return gyro_range_;}
+            inline GyroRange gyro_range() const { return gyro_range_; }
             bool ConfigSrd(const uint8_t srd);
-            inline uint8_t srd() const {return srd_;}
+            inline uint8_t srd() const { return srd_; }
             bool ConfigDlpf(const DlpfBandwidth dlpf);
-            inline DlpfBandwidth dlpf() const {return dlpf_bandwidth_;}
+            inline DlpfBandwidth dlpf() const { return dlpf_bandwidth_; }
             bool Read();
-            inline float accel_x_mps2() const {return accel_mps2_[0];}
-            inline float accel_y_mps2() const {return accel_mps2_[1];}
-            inline float accel_z_mps2() const {return accel_mps2_[2];}
-            inline float gyro_x_radps() const {return gyro_radps_[0];}
-            inline float gyro_y_radps() const {return gyro_radps_[1];}
-            inline float gyro_z_radps() const {return gyro_radps_[2];}
-            inline float mag_x_ut() const {return mag_ut_[0];}
-            inline float mag_y_ut() const {return mag_ut_[1];}
-            inline float mag_z_ut() const {return mag_ut_[2];}
-            inline float die_temperature_c() const {return die_temperature_c_;}
+            inline float accel_x_mps2() const { return accel_mps2_[0]; }
+            inline float accel_y_mps2() const { return accel_mps2_[1]; }
+            inline float accel_z_mps2() const { return accel_mps2_[2]; }
+            inline float gyro_x_radps() const { return gyro_radps_[0]; }
+            inline float gyro_y_radps() const { return gyro_radps_[1]; }
+            inline float gyro_z_radps() const { return gyro_radps_[2]; }
+            inline float mag_x_ut() const { return mag_ut_[0]; }
+            inline float mag_y_ut() const { return mag_ut_[1]; }
+            inline float mag_z_ut() const { return mag_ut_[2]; }
+            inline float die_temperature_c() const { return die_temperature_c_; }
 
             /* Configuration */
             static constexpr uint8_t SPI_READ_ = 0x80;
@@ -139,8 +134,8 @@ namespace VCTR
             GyroRange gyro_range_;
             DlpfBandwidth dlpf_bandwidth_;
             uint8_t srd_;
-            bool akFailure_ = false;                               //################ Keep track of the AK8963 in case something fails.
-            bool mpuFailure_ = false;                               //################ Keep track of the MPU6500 in case something fails.
+            bool akFailure_ = false;  // ################ Keep track of the AK8963 in case something fails.
+            bool mpuFailure_ = false; // ################ Keep track of the MPU6500 in case something fails.
             static constexpr uint8_t WHOAMI_MPU9250_ = 0x71;
             static constexpr uint8_t WHOAMI_MPU9255_ = 0x73;
             static constexpr uint8_t WHOAMI_AK8963_ = 0x48;
@@ -195,7 +190,6 @@ namespace VCTR
             bool ReadRegisters(uint8_t reg, uint8_t count, uint8_t *data);
             bool WriteAk8963Register(uint8_t reg, uint8_t data);
             bool ReadAk8963Registers(uint8_t reg, uint8_t count, uint8_t *data);
-
         };
 
     }

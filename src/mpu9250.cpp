@@ -1,6 +1,25 @@
-#include "ExVectrSensor/Sensors/mpu9250.hpp"
+
+/**
+ * Credit for original implementation to:
+ *
+ * Brian R Taylor
+ * brian.taylor@bolderflight.com
+ * Copyright (c) 2021 Bolder Flight Systems Inc
+ *
+ * Original implementation: https://github.com/bolderflight/invensense-imu
+ *
+ * Heavily modified for use with the ExVectrSensor library with extra features.
+ *
+ *
+ */
 
 #include "ExVectrCore/time_definitions.hpp"
+#include "ExVectrCore/print.hpp"
+
+#include "ExVectrHAL/io_types.hpp"
+#include "ExVectrHAL/io_params.hpp"
+
+#include "ExVectrSensor/Sensors/mpu9250.hpp"
 
 namespace VCTR
 {
@@ -69,7 +88,6 @@ namespace VCTR
         gyroVals.cov = 0.1;
 
         gyroTopic_.publish(Core::Timestamped<Data::ValueCov<float, 3>>(gyroVals, time));
-
     }
 
     bool SNSR::MPU9250::readAccel()
@@ -649,7 +667,7 @@ namespace VCTR
             ioBus_->writeByte(data, true);
         }
         else
-        {   
+        {
             ioBus_->setOutputParam(HAL::IO_PARAM_t::PARAM_SPEED, spi_clock_);
             ioBus_->setOutputParam(HAL::IO_PARAM_t::PARAM_MSBFIRST, true);
             ioBus_->setOutputParam(HAL::IO_PARAM_t::PARAM_SPIMODE, 3);

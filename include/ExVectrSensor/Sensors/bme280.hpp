@@ -13,19 +13,12 @@
  *
  */
 
-
 #ifndef EXVECTRSENSOR_BME280_H
 #define EXVECTRSENSOR_BME280_H
 
-
-#include "ExVectrCore/print.hpp"
-
-#include "ExVectrHAL/io_types.hpp"
-#include "ExVectrHAL/io_params.hpp"
 #include "ExVectrHAL/io.hpp"
 
 #include "../barometer.hpp"
-
 
 #ifndef BME280_SPI_CLOCK
 #ifdef ARDUINO_ARCH_ESP32
@@ -48,7 +41,6 @@ namespace VCTR
         class BME280 : public Barometer
         {
         public:
-
             static constexpr uint8_t MODE_SLEEP = 0b00;
             static constexpr uint8_t MODE_FORCED = 0b01;
             static constexpr uint8_t MODE_NORMAL = 0b11;
@@ -79,8 +71,8 @@ namespace VCTR
             static constexpr uint8_t BME280_DIG_P9_LSB_REG = 0x9E;
             static constexpr uint8_t BME280_DIG_P9_MSB_REG = 0x9F;
             static constexpr uint8_t BME280_DIG_H1_REG = 0xA1;
-            static constexpr uint8_t BME280_CHIP_ID_REG = 0xD0;           // Chip ID
-            static constexpr uint8_t BME280_RST_REG = 0xE0;               // Softreset Reg
+            static constexpr uint8_t BME280_CHIP_ID_REG = 0xD0; // Chip ID
+            static constexpr uint8_t BME280_RST_REG = 0xE0;     // Softreset Reg
             static constexpr uint8_t BME280_DIG_H2_LSB_REG = 0xE1;
             static constexpr uint8_t BME280_DIG_H2_MSB_REG = 0xE2;
             static constexpr uint8_t BME280_DIG_H3_REG = 0xE3;
@@ -88,20 +80,19 @@ namespace VCTR
             static constexpr uint8_t BME280_DIG_H4_LSB_REG = 0xE5;
             static constexpr uint8_t BME280_DIG_H5_MSB_REG = 0xE6;
             static constexpr uint8_t BME280_DIG_H6_REG = 0xE7;
-            static constexpr uint8_t BME280_CTRL_HUMIDITY_REG = 0xF2;     // Ctrl Humidity Reg
-            static constexpr uint8_t BME280_STAT_REG = 0xF3;              // Status Reg
-            static constexpr uint8_t BME280_CTRL_MEAS_REG = 0xF4;         // Ctrl Measure Reg
-            static constexpr uint8_t BME280_CONFIG_REG = 0xF5;            // Configuration Reg
-            static constexpr uint8_t BME280_MEASUREMENTS_REG = 0xF7;      // Measurements register start
-            static constexpr uint8_t BME280_PRESSURE_MSB_REG = 0xF7;      // Pressure MSB
-            static constexpr uint8_t BME280_PRESSURE_LSB_REG = 0xF8;      // Pressure LSB
-            static constexpr uint8_t BME280_PRESSURE_XLSB_REG = 0xF9;     // Pressure XLSB
-            static constexpr uint8_t BME280_TEMPERATURE_MSB_REG = 0xFA;   // Temperature MSB
-            static constexpr uint8_t BME280_TEMPERATURE_LSB_REG = 0xFB;   // Temperature LSB
-            static constexpr uint8_t BME280_TEMPERATURE_XLSB_REG = 0xFC;  // Temperature XLSB
-            static constexpr uint8_t BME280_HUMIDITY_MSB_REG = 0xFD;      // Humidity MSB
-            static constexpr uint8_t BME280_HUMIDITY_LSB_REG = 0xFE;      // Humidity LSB
-
+            static constexpr uint8_t BME280_CTRL_HUMIDITY_REG = 0xF2;    // Ctrl Humidity Reg
+            static constexpr uint8_t BME280_STAT_REG = 0xF3;             // Status Reg
+            static constexpr uint8_t BME280_CTRL_MEAS_REG = 0xF4;        // Ctrl Measure Reg
+            static constexpr uint8_t BME280_CONFIG_REG = 0xF5;           // Configuration Reg
+            static constexpr uint8_t BME280_MEASUREMENTS_REG = 0xF7;     // Measurements register start
+            static constexpr uint8_t BME280_PRESSURE_MSB_REG = 0xF7;     // Pressure MSB
+            static constexpr uint8_t BME280_PRESSURE_LSB_REG = 0xF8;     // Pressure LSB
+            static constexpr uint8_t BME280_PRESSURE_XLSB_REG = 0xF9;    // Pressure XLSB
+            static constexpr uint8_t BME280_TEMPERATURE_MSB_REG = 0xFA;  // Temperature MSB
+            static constexpr uint8_t BME280_TEMPERATURE_LSB_REG = 0xFB;  // Temperature LSB
+            static constexpr uint8_t BME280_TEMPERATURE_XLSB_REG = 0xFC; // Temperature XLSB
+            static constexpr uint8_t BME280_HUMIDITY_MSB_REG = 0xFD;     // Humidity MSB
+            static constexpr uint8_t BME280_HUMIDITY_LSB_REG = 0xFE;     // Humidity LSB
 
         private:
             struct BME280_SensorSettings
@@ -217,7 +208,6 @@ namespace VCTR
             double dewPointC(void);
 
         private:
-
             // The following utilities read and write
 
             // ReadRegisterRegion takes a uint8 array address as input and reads
@@ -231,7 +221,6 @@ namespace VCTR
             // Writes a byte;
             void writeRegister(uint8_t, uint8_t);
 
-        
             uint8_t checkSampleValue(uint8_t userValue); // Checks for valid over sample values
             void readTempCFromBurst(uint8_t buffer[], BME280_SensorMeasurements *measurements);
             void readTempFFromBurst(uint8_t buffer[], BME280_SensorMeasurements *measurements);
