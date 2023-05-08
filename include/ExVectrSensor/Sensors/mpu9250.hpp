@@ -225,11 +225,10 @@ namespace VCTR
             bool ReadAk8963Registers(uint8_t reg, uint8_t count, uint8_t *data);
         };
 
-
+        /**
+         * @brief This class uses tasks to automatically init and read the sensor. 
+         */
         class MPU9250Driver: public MPU9250, public Core::Task_Periodic {
-        private:
-
-
         public: 
 
             /**
