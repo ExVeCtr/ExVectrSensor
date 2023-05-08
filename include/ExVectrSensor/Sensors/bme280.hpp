@@ -165,6 +165,12 @@ namespace VCTR
             bool initSensor(HAL::IO &ioBus);
 
             /**
+             * @brief The lowest interval to read the barometer at.
+             * @return Interval in nanoseconds.
+             */
+            int64_t getBaroInterval() const override;
+
+            /**
              * @brief Reads all data from BME280 and publishes it to topics.
              * @return true is successfull, false otherwise.
              */

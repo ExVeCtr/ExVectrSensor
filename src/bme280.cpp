@@ -35,10 +35,10 @@ SNSR::BME280::BME280(void)
     // These are deprecated settings
     settings.runMode = 3;  // Normal/Run
     settings.tStandby = 0; // 0.5ms
-    settings.filter = 0;   // Filter off
-    settings.tempOverSample = 1;
-    settings.pressOverSample = 1;
-    settings.humidOverSample = 1;
+    settings.filter = 4;   // Filter off
+    settings.tempOverSample = 16;
+    settings.pressOverSample = 4;
+    settings.humidOverSample = 16;
     settings.tempCorrection = 0.f; // correction of temperature - added to the result
 }
 
@@ -156,11 +156,16 @@ bool SNSR::BME280::readSensorData()
 
     Data::ValueCov<float, 1> baroVal;
     baroVal.val(0) = pressure;
-    baroVal.cov = 0.1;
+    baroVal.cov = 0.5;
 
     baroTopic_.publish(Core::Timestamped<Data::ValueCov<float, 1>>(baroVal, time));
 
     return true;
+}
+
+int64_t SNSR::BME280::getBaroInterval() const
+{
+    return 20 * Core::MILLISECONDS;
 }
 
 bool SNSR::BME280::readBaro()
