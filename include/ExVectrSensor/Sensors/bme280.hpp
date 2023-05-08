@@ -16,21 +16,12 @@
 #ifndef EXVECTRSENSOR_BME280_H
 #define EXVECTRSENSOR_BME280_H
 
+#include "ExVectrCore/task_types.hpp"
+#include "ExVectrCore/scheduler2.hpp"
+
 #include "ExVectrHAL/io.hpp"
 
 #include "../barometer.hpp"
-
-#ifndef BME280_SPI_CLOCK
-#ifdef ARDUINO_ARCH_ESP32
-#define BME280_SPI_CLOCK 1000000
-#else
-#define BME280_SPI_CLOCK 500000
-#endif
-#endif
-
-#ifndef BME280_SPI_MODE
-#define BME280_SPI_MODE SPI_MODE0
-#endif
 
 namespace VCTR
 {
@@ -41,6 +32,10 @@ namespace VCTR
         class BME280 : public Barometer
         {
         public:
+
+            static constexpr uint8_t BME280_SPI_MODE = 0;
+            static constexpr size_t  BME280_SPI_CLOCK = 500000;
+
             static constexpr uint8_t MODE_SLEEP = 0b00;
             static constexpr uint8_t MODE_FORCED = 0b01;
             static constexpr uint8_t MODE_NORMAL = 0b11;
@@ -94,7 +89,7 @@ namespace VCTR
             static constexpr uint8_t BME280_HUMIDITY_MSB_REG = 0xFD;     // Humidity MSB
             static constexpr uint8_t BME280_HUMIDITY_LSB_REG = 0xFE;     // Humidity LSB
 
-        private:
+        protected:
             struct BME280_SensorSettings
             {
             public:
@@ -232,6 +227,38 @@ namespace VCTR
             void readTempFFromBurst(uint8_t buffer[], BME280_SensorMeasurements *measurements);
 
             float _referencePressure = 101325.0; // Default but is changeable
+        };
+
+
+        /**
+         * @brief This class uses tasks to automatically init and read the sensor. 
+         */
+        class BME280Driver: public BME280, public Core::Task_Periodic {
+        public: 
+
+            /**
+             * @brief Constructor that uses the standard system scheduler.
+             * @param ioBus The bus connection with sensor.
+             */
+            BME280Driver(HAL::IO &ioBus);
+
+            /**
+             * @brief Constructor that uses the given scheduler.
+             * @param ioBus The bus connection with sensor.
+             * @param scheduler Scheduler to use for this driver.
+             */
+            BME280Driver(HAL::IO &ioBus, Core::Scheduler& scheduler);
+
+            /**
+             * @brief Initialises sensor and expected to be called once at start by scheduler
+             */
+            void taskInit() override;
+
+            /**
+             * @brief main task thread that reads all sensor data and publishes it. To be called by scheduler.
+             */
+            void taskThread() override;
+
         };
 
     }

@@ -13,6 +13,46 @@
 
 using namespace VCTR;
 
+
+SNSR::QMC5883Driver::QMC5883Driver(HAL::IO &ioBus) : Task_Periodic("QMC5883 Driver", 20 * Core::MILLISECONDS)
+{
+    ioBus_ = &ioBus;
+    Core::getSystemScheduler().addTask(*this);
+    setPriority(1000);
+}
+
+SNSR::QMC5883Driver::QMC5883Driver(HAL::IO &ioBus, Core::Scheduler &scheduler) : Task_Periodic("QMC5883 Driver", 20 * Core::MILLISECONDS)
+{
+    ioBus_ = &ioBus;
+    scheduler.addTask(*this);
+    setPriority(1000);
+}
+
+void SNSR::QMC5883Driver::taskInit()
+{
+    if (ioBus_ == nullptr)
+    {
+        Core::printE("QMC5883 Driver taskInit(): ioBus is a nullptr. Give the constructor the iobus connected with the sensor!\n");
+        return;
+    }
+    if (!initSensor(*ioBus_))
+    {
+        Core::printE("QMC5883 Driver taskInit(): failed to init sensor!\n");
+        return;
+    }
+}
+
+void SNSR::QMC5883Driver::taskThread()
+{
+    if (!initialised_)
+    {
+        Core::printE("QMC5883 Driver taskThread(): sensor is not initialised!\n");
+        return;
+    }
+    readMag();
+}
+
+
 bool SNSR::QMC5883::readMag()
 {
 

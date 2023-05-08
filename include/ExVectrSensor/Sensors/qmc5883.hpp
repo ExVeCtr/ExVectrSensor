@@ -1,6 +1,8 @@
 #ifndef EXVECTRSENSOR_QMC5883_H
 #define EXVECTRSENSOR_QMC5883_H
 
+#include "ExVectrCore/task_types.hpp"
+#include "ExVectrCore/scheduler2.hpp"
 
 #include "ExVectrHAL/io.hpp"
 
@@ -17,7 +19,7 @@ namespace VCTR
          */
         class QMC5883 : public Magnetometer
         {
-        private:
+        protected:
             /// IO Bus to use for chip communications.
             HAL::IO *ioBus_ = nullptr;
             /// If the sensor has been successfully initialised and is in working condition
@@ -40,7 +42,6 @@ namespace VCTR
             static constexpr uint8_t QMC5883L_CHIP_ID = 13;
 
         public:
-        
             /**
              * @brief Initialises and sets sensors settings.
              * @param ioBus Which bus to use for communications.
@@ -67,7 +68,36 @@ namespace VCTR
              * @return true if available
              */
             bool dataAvailable();
+        };
 
+        /**
+         * @brief This class uses tasks to automatically init and read the sensor.
+         */
+        class QMC5883Driver : public QMC5883, public Core::Task_Periodic
+        {
+        public:
+            /**
+             * @brief Constructor that uses the standard system scheduler.
+             * @param ioBus The bus connection with sensor.
+             */
+            QMC5883Driver(HAL::IO &ioBus);
+
+            /**
+             * @brief Constructor that uses the given scheduler.
+             * @param ioBus The bus connection with sensor.
+             * @param scheduler Scheduler to use for this driver.
+             */
+            QMC5883Driver(HAL::IO &ioBus, Core::Scheduler &scheduler);
+
+            /**
+             * @brief Initialises sensor and expected to be called once at start by scheduler
+             */
+            void taskInit() override;
+
+            /**
+             * @brief main task thread that reads all sensor data and publishes it. To be called by scheduler.
+             */
+            void taskThread() override;
         };
 
     }

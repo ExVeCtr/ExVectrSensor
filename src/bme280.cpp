@@ -16,12 +16,56 @@
 #include "ExVectrCore/time_definitions.hpp"
 #include "ExVectrCore/print.hpp"
 
+#include "ExVectrCore/task_types.hpp"
+#include "ExVectrCore/scheduler2.hpp"
+
 #include "ExVectrHAL/io_types.hpp"
 #include "ExVectrHAL/io_params.hpp"
 
 #include "ExVectrSensor/Sensors/bme280.hpp"
 
 using namespace VCTR;
+
+
+// ### Below is MPU9250Driver Implementation ###
+
+SNSR::BME280Driver::BME280Driver(HAL::IO &ioBus) : Task_Periodic("BME280 Driver", 20 * Core::MILLISECONDS)
+{
+    ioBus_ = &ioBus;
+    Core::getSystemScheduler().addTask(*this);
+    setPriority(1000);
+}
+
+SNSR::BME280Driver::BME280Driver(HAL::IO &ioBus, Core::Scheduler &scheduler) : Task_Periodic("BME280 Driver", 20 * Core::MILLISECONDS)
+{
+    ioBus_ = &ioBus;
+    scheduler.addTask(*this);
+    setPriority(1000);
+}
+
+void SNSR::BME280Driver::taskInit()
+{
+    if (ioBus_ == nullptr)
+    {
+        Core::printE("BME280 Driver taskInit(): ioBus is a nullptr. Give the constructor the iobus connected with the sensor!\n");
+        return;
+    }
+    if (!initSensor(*ioBus_))
+    {
+        Core::printE("BME280 Driver taskInit(): failed to init sensor!\n");
+        return;
+    }
+}
+
+void SNSR::BME280Driver::taskThread()
+{
+    if (!initialised_)
+    {
+        Core::printE("BME280 Driver taskThread(): sensor is not initialised!\n");
+        return;
+    }
+    readBaro();
+}
 
 //****************************************************************************//
 //
