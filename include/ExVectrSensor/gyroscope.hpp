@@ -33,6 +33,12 @@ namespace VCTR
              * @return true if reading was successfull. False otherwise.
              */
             virtual bool readGyro() = 0;
+
+            /**
+             * @brief The lowest interval to read the gyroscope at.
+             * @return Interval in nanoseconds
+             */
+            virtual int64_t getGyroInterval() const = 0;
         };
 
     }

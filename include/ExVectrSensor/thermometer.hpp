@@ -33,6 +33,12 @@ namespace VCTR
              * @return true if reading was successfull. False otherwise.
              */
             virtual bool readBaro() = 0;
+
+            /**
+             * @brief The lowest interval to read the thermometer at.
+             * @return Interval in nanoseconds
+             */
+            virtual int64_t getThermoInterval() const = 0;
         };
 
     }

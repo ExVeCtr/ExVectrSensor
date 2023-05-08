@@ -33,6 +33,12 @@ namespace VCTR
              * @return true if reading was successfull. False otherwise.
              */
             virtual bool readMag() = 0;
+
+            /**
+             * @brief The lowest interval to read the magnetometer at.
+             * @return Interval in nanoseconds.
+             */
+            virtual int64_t getMagInterval() const = 0;
         };
 
     }
