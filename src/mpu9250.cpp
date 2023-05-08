@@ -24,6 +24,55 @@
 namespace VCTR
 {
 
+    // ### Below is MPU9250Driver Implementation ###
+
+    SNSR::MPU9250Driver::MPU9250Driver(HAL::IO &ioBus, bool disableMag) : Task_Periodic("MPU9250 Driver", 1.01 * Core::MILLISECONDS)
+    {
+        disableMag_ = disableMag;
+        ioBus_ = &ioBus;
+        Core::getSystemScheduler().addTask(*this);
+        setPriority(1000);
+    }
+
+    SNSR::MPU9250Driver::MPU9250Driver(HAL::IO &ioBus, Core::Scheduler &scheduler, bool disableMag) : Task_Periodic("MPU9250 Driver", 1.01 * Core::MILLISECONDS)
+    {
+        disableMag_ = disableMag;
+        ioBus_ = &ioBus;
+        scheduler.addTask(*this);
+        setPriority(1000);
+    }
+
+    void SNSR::MPU9250Driver::taskInit()
+    {
+        if (ioBus_ == nullptr)
+        {
+            Core::printE("MPU9250 taskInit(): ioBus is a nullptr. Give the constructor the iobus connected with the sensor!\n");
+            return;
+        }
+        if (!initSensor(*ioBus_))
+        {
+            Core::printE("MPU9250 taskInit(): failed to init sensor!\n");
+            return;
+        }
+    }
+
+    void SNSR::MPU9250Driver::taskThread()
+    {
+        if (!initialised_)
+        {
+            Core::printE("MPU9250 taskThread(): sensor is not initialised!\n");
+            return;
+        }
+        readAll();
+    }
+
+    // ### Below is MPU9250 Implementation ###
+
+    SNSR::MPU9250::MPU9250(bool disableMag = false)
+    {
+        disableMag_ = disableMag;
+    }
+
     bool SNSR::MPU9250::initSensor(HAL::IO &ioBus)
     {
 
@@ -47,7 +96,9 @@ namespace VCTR
         }
         else
         {
-            ioBus_->setInputParam(HAL::IO_PARAM_t::PARAM_SPIMODE, 3);
+            ioBus_->setOutputParam(HAL::IO_PARAM_t::PARAM_SPEED, spi_clock_);
+            ioBus_->setOutputParam(HAL::IO_PARAM_t::PARAM_MSBFIRST, true);
+            ioBus_->setOutputParam(HAL::IO_PARAM_t::PARAM_SPIMODE, 3);
         }
 
         if (ioBus_->getOutputType() == HAL::IO_TYPE_t::BUS_I2C)
@@ -56,65 +107,190 @@ namespace VCTR
         }
         else
         {
+            ioBus_->setOutputParam(HAL::IO_PARAM_t::PARAM_SPEED, spi_clock_);
+            ioBus_->setOutputParam(HAL::IO_PARAM_t::PARAM_MSBFIRST, true);
             ioBus_->setOutputParam(HAL::IO_PARAM_t::PARAM_SPIMODE, 3);
         }
 
-        if (!Begin(true))
+        if (disableMag_)
+            VCTR::Core::printD("MPU9250 initSensor(): Configured to disable mag!\n");
+
+        if (!Begin(disableMag_))
         {
             VCTR::Core::printW("MPU9250 Failed to start!\n");
             return false;
         }
 
+        EnableDrdyInt();
+        ConfigAccelRange(AccelRange::ACCEL_RANGE_16G);
+        ConfigGyroRange(GyroRange::GYRO_RANGE_2000DPS);
+        ConfigDlpf(DlpfBandwidth::DLPF_BANDWIDTH_184HZ);
+        ConfigSrd(0);
+
         initialised_ = true; // Keep at end of function!
+
+        return true;
     }
 
     bool SNSR::MPU9250::readGyro()
     {
         if (!initialised_)
         {
-            VCTR::Core::printE("MPU9250 class not yet initialised!\n");
+            VCTR::Core::printE("MPU9250 readGyro(): class not yet initialised!\n");
             return false;
         }
 
         int64_t time = VCTR::Core::NOW();
 
-        Read();
+        if (!Read())
+        {
+            VCTR::Core::printW("MPU9250 readGyro(): Something went wrong reading sensor values!\n");
+            return false;
+        }
 
         Data::ValueCov<float, 3> gyroVals;
         gyroVals.val(0) = gyro_x_radps();
         gyroVals.val(1) = gyro_y_radps();
         gyroVals.val(2) = gyro_z_radps();
 
-        gyroVals.cov = 0.1;
+        gyroVals.cov = gyroVariance_;
 
         gyroTopic_.publish(Core::Timestamped<Data::ValueCov<float, 3>>(gyroVals, time));
+
+        return true;
     }
 
     bool SNSR::MPU9250::readAccel()
     {
         if (!initialised_)
         {
-            VCTR::Core::printE("MPU9250 class not yet initialised!\n");
+            VCTR::Core::printE("MPU9250 readAccel(): class not yet initialised!\n");
             return false;
         }
+
+        int64_t time = VCTR::Core::NOW();
+
+        if (!Read())
+        {
+            VCTR::Core::printW("MPU9250 readAccel(): Something went wrong reading sensor values!\n");
+            return false;
+        }
+
+        Data::ValueCov<float, 3> accelVals;
+        accelVals.val(0) = accel_x_mps2();
+        accelVals.val(1) = accel_y_mps2();
+        accelVals.val(2) = accel_z_mps2();
+
+        accelVals.cov = accelVariance_;
+
+        accelTopic_.publish(Core::Timestamped<Data::ValueCov<float, 3>>(accelVals, time));
+
+        return true;
     }
 
     bool SNSR::MPU9250::readMag()
     {
         if (!initialised_)
         {
-            VCTR::Core::printE("MPU9250 class not yet initialised!\n");
+            VCTR::Core::printE("MPU9250 readMag(): class not yet initialised!\n");
             return false;
         }
+        if (akFailure_)
+        {
+            VCTR::Core::printE("MPU9250 readMag(): Mag failed!\n");
+            return false;
+        }
+        if (disableMag_)
+        {
+            return false;
+        }
+
+        int64_t time = VCTR::Core::NOW();
+
+        if (!Read())
+        {
+            VCTR::Core::printW("MPU9250 readMag(): Something went wrong reading sensor values!\n");
+            return false;
+        }
+
+        Data::ValueCov<float, 3> magVals;
+        magVals.val(0) = mag_x_ut();
+        magVals.val(1) = mag_y_ut();
+        magVals.val(2) = mag_z_ut();
+
+        magVals.cov = magVariance_;
+
+        magTopic_.publish(Core::Timestamped<Data::ValueCov<float, 3>>(magVals, time));
+
+        return true;
     }
 
     bool SNSR::MPU9250::readAll()
     {
+
         if (!initialised_)
         {
-            VCTR::Core::printE("MPU9250 class not yet initialised!\n");
+            VCTR::Core::printE("MPU9250 readAll(): class not yet initialised!\n");
             return false;
         }
+
+        int64_t time = VCTR::Core::NOW();
+
+        if (!Read())
+        {
+            VCTR::Core::printW("MPU9250 readAll(): Something went wrong reading sensor values!\n");
+            return false;
+        }
+
+        Data::ValueCov<float, 3> gyroVals;
+        gyroVals.val(0) = gyro_x_radps();
+        gyroVals.val(1) = gyro_y_radps();
+        gyroVals.val(2) = gyro_z_radps();
+        gyroVals.cov = gyroVariance_;
+
+        gyroTopic_.publish(Core::Timestamped<Data::ValueCov<float, 3>>(gyroVals, time));
+
+        Data::ValueCov<float, 3> accelVals;
+        accelVals.val(0) = accel_x_mps2();
+        accelVals.val(1) = accel_y_mps2();
+        accelVals.val(2) = accel_z_mps2();
+        accelVals.cov = accelVariance_;
+
+        accelTopic_.publish(Core::Timestamped<Data::ValueCov<float, 3>>(accelVals, time));
+
+        if (disableMag_)
+            return true;
+
+        if (akFailure_)
+        {
+            VCTR::Core::printE("MPU9250 readMag(): Mag failed!\n");
+            return false;
+        }
+
+        Data::ValueCov<float, 3> magVals;
+        magVals.val(0) = mag_x_ut();
+        magVals.val(1) = mag_y_ut();
+        magVals.val(2) = mag_z_ut();
+        magVals.cov = magVariance_;
+
+        magTopic_.publish(Core::Timestamped<Data::ValueCov<float, 3>>(magVals, time));
+
+        return true;
+    }
+
+    int64_t SNSR::MPU9250::getMagInterval() const
+    {
+        return 10 * Core::MILLISECONDS;
+    }
+
+    int64_t SNSR::MPU9250::getAccelInterval() const
+    {
+        return 1 * Core::MILLISECONDS;
+    }
+
+    int64_t SNSR::MPU9250::getGyroInterval() const
+    {
+        return 1 * Core::MILLISECONDS;
     }
 
     /**
@@ -227,7 +403,7 @@ namespace VCTR
             if (who_am_i != WHOAMI_AK8963_)
             {
                 akFailure_ = true;
-                VCTR::Core::printE("MPU9250 mag WHOAMI check failed. WHOAMI: %d!\n", who_am_i);
+                VCTR::Core::printE("MPU9250 mag WHOAMI check failed. WHOAMI: %d! Disabling mag!\n", who_am_i);
             }
         }
         /* Skip if mag failed */
@@ -311,6 +487,7 @@ namespace VCTR
             }
         }
         /* Set the accel range to 16G by default */
+        VCTR::Core::printD("MPU9250 set accel range to 16g at startup.\n");
         if (!ConfigAccelRange(ACCEL_RANGE_16G))
         {
             akFailure_ = true;
@@ -319,6 +496,7 @@ namespace VCTR
             return false;
         }
         /* Set the gyro range to 2000DPS by default*/
+        VCTR::Core::printD("MPU9250 set gyro range to 2000dps at startup.\n");
         if (!ConfigGyroRange(GYRO_RANGE_2000DPS))
         {
             akFailure_ = true;
@@ -328,6 +506,7 @@ namespace VCTR
         }
 
         /* Set the DLPF to 20HZ by default */
+        VCTR::Core::printD("MPU9250 set dlpf to 20Hz at startup.\n");
         if (!ConfigDlpf(DLPF_BANDWIDTH_20HZ))
         {
             akFailure_ = true;
@@ -336,6 +515,7 @@ namespace VCTR
             return false;
         }
         /* Set the SRD to 0 by default */
+        VCTR::Core::printD("MPU9250 set srd to 0 at startup.\n");
         if (!ConfigSrd(0))
         {
             akFailure_ = true;
@@ -660,24 +840,14 @@ namespace VCTR
     bool SNSR::MPU9250::WriteRegister(uint8_t reg, uint8_t data)
     {
         uint8_t ret_val;
-        if (ioBus_->getOutputType() == HAL::IO_TYPE_t::BUS_I2C)
-        {
-            ioBus_->setOutputParam(HAL::IO_PARAM_t::PARAM_SPEED, 100000);
-            ioBus_->writeByte(reg, false);
-            ioBus_->writeByte(data, true);
-        }
-        else
-        {
-            ioBus_->setOutputParam(HAL::IO_PARAM_t::PARAM_SPEED, spi_clock_);
-            ioBus_->setOutputParam(HAL::IO_PARAM_t::PARAM_MSBFIRST, true);
-            ioBus_->setOutputParam(HAL::IO_PARAM_t::PARAM_SPIMODE, 3);
 
-            ioBus_->writeByte(reg, false);
-            ioBus_->writeByte(data, true);
-        }
+        ioBus_->writeByte(reg, false);
+        ioBus_->writeByte(data, true);
+
         VCTR::Core::delay(VCTR::Core::MILLISECONDS * 10);
         ReadRegisters(reg, sizeof(ret_val), &ret_val);
         VCTR::Core::delay(VCTR::Core::MILLISECONDS * 10);
+
         if (data == ret_val)
         {
             return true;
@@ -691,23 +861,15 @@ namespace VCTR
     {
         if (ioBus_->getInputType() == HAL::IO_TYPE_t::BUS_I2C)
         {
-
-            ioBus_->setOutputParam(HAL::IO_PARAM_t::PARAM_SPEED, 100000);
             ioBus_->writeByte(reg, true);
-
-            ioBus_->readData(data, count, true);
         }
         else
         {
 
-            ioBus_->setOutputParam(HAL::IO_PARAM_t::PARAM_SPEED, spi_clock_);
-            ioBus_->setOutputParam(HAL::IO_PARAM_t::PARAM_MSBFIRST, true);
-            ioBus_->setOutputParam(HAL::IO_PARAM_t::PARAM_SPIMODE, 3);
-
             ioBus_->writeByte(reg | SPI_READ_, false);
-            ioBus_->readData(data, count, true);
-            return true;
         }
+
+        return ioBus_->readData(data, count, true) == count;
     }
     bool SNSR::MPU9250::WriteAk8963Register(uint8_t reg, uint8_t data)
     {

@@ -16,6 +16,9 @@
 #ifndef EXVECTRSENSOR_MPU9250_H
 #define EXVECTRSENSOR_MPU9250_H
 
+#include "ExVectrCore/task_types.hpp"
+#include "ExVectrCore/scheduler2.hpp"
+
 #include "ExVectrHAL/io.hpp"
 
 #include "../gyroscope.hpp"
@@ -34,10 +37,16 @@ namespace VCTR
          */
         class MPU9250 : public Gyroscope, public Accelerometer, public Magnetometer
         {
-        private:
+        protected:
             HAL::IO *ioBus_ = nullptr;
 
             bool initialised_ = false;
+
+            bool disableMag_ = false;
+
+            static constexpr float gyroVariance_ = 0.002;
+            static constexpr float accelVariance_ = 0.08;
+            static constexpr float magVariance_ = 1;
 
         public:
             enum DlpfBandwidth : uint8_t
@@ -65,6 +74,12 @@ namespace VCTR
                 GYRO_RANGE_1000DPS = 0x10,
                 GYRO_RANGE_2000DPS = 0x18
             };
+
+            /**
+             * @brief Standard constructor.
+             * @param disableMag If true then mag will be disabled and not used.
+             */
+            MPU9250(bool disableMag = false);
 
             /**
              * @brief Initialises sensor on the given IO bus.
@@ -98,7 +113,25 @@ namespace VCTR
              */
             bool readAll();
 
-        private:
+            /**
+             * @brief The lowest interval to read the magnetometer at.
+             * @return Interval in nanoseconds
+             */
+            int64_t getMagInterval() const override;
+
+            /**
+             * @brief The lowest interval to read the accelerometer at.
+             * @return Interval in nanoseconds
+             */
+            int64_t getAccelInterval() const override;
+
+            /**
+             * @brief The lowest interval to read the gyroscope at.
+             * @return Interval in nanoseconds
+             */
+            int64_t getGyroInterval() const override;
+
+        protected:
             /**
              * Below are all registers and extra functions.
              */
@@ -190,6 +223,40 @@ namespace VCTR
             bool ReadRegisters(uint8_t reg, uint8_t count, uint8_t *data);
             bool WriteAk8963Register(uint8_t reg, uint8_t data);
             bool ReadAk8963Registers(uint8_t reg, uint8_t count, uint8_t *data);
+        };
+
+
+        class MPU9250Driver: public MPU9250, public Core::Task_Periodic {
+        private:
+
+
+        public: 
+
+            /**
+             * @brief Constructor that uses the standard system scheduler.
+             * @param ioBus The bus connection with MPU9250.
+             * @param disableMag If true then mag will be disabled and not used.
+             */
+            MPU9250Driver(HAL::IO &ioBus, bool disableMag = false);
+
+            /**
+             * @brief Constructor that uses the given scheduler.
+             * @param ioBus The bus connection with MPU9250.
+             * @param scheduler Scheduler to use for this driver.
+             * @param disableMag If true then mag will be disabled and not used.
+             */
+            MPU9250Driver(HAL::IO &ioBus, Core::Scheduler& scheduler, bool disableMag = false);
+
+            /**
+             * @brief Initialises sensor and expected to be called once at start by scheduler
+             */
+            void taskInit() override;
+
+            /**
+             * @brief main task thread that reads all sensor data and publishes it. To be called by scheduler.
+             */
+            void taskThread() override;
+
         };
 
     }
