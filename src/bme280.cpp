@@ -181,6 +181,8 @@ bool SNSR::BME280::initSensor(HAL::IO &ioBus)
     readRegister(BME280_CHIP_ID_REG); // Should return 0x60
 
     initialised_ = true; // Keep at end of function!>
+
+    return true;
 }
 
 bool SNSR::BME280::readSensorData()
@@ -722,7 +724,6 @@ int16_t SNSR::BME280::readRegisterInt16(uint8_t offset)
 void SNSR::BME280::writeRegister(uint8_t offset, uint8_t dataToWrite)
 {
 
-    uint8_t ret_val;
     if (ioBus_->getOutputType() == HAL::IO_TYPE_t::BUS_I2C)
     {
         ioBus_->setOutputParam(HAL::IO_PARAM_t::PARAM_SPEED, 500000);
