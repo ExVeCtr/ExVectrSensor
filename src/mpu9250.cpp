@@ -26,7 +26,7 @@ namespace VCTR
 
     // ### Below is MPU9250Driver Implementation ###
 
-    SNSR::MPU9250Driver::MPU9250Driver(HAL::IO &ioBus, bool disableMag) : Task_Periodic("MPU9250 Driver", 1.01 * Core::MILLISECONDS)
+    SNSR::MPU9250Driver::MPU9250Driver(HAL::IO &ioBus, bool disableMag) : Task_Periodic("MPU9250 Driver", 1 * Core::MILLISECONDS)
     {
         disableMag_ = disableMag;
         ioBus_ = &ioBus;
@@ -34,7 +34,7 @@ namespace VCTR
         setPriority(1000);
     }
 
-    SNSR::MPU9250Driver::MPU9250Driver(HAL::IO &ioBus, Core::Scheduler &scheduler, bool disableMag) : Task_Periodic("MPU9250 Driver", 1.01 * Core::MILLISECONDS)
+    SNSR::MPU9250Driver::MPU9250Driver(HAL::IO &ioBus, Core::Scheduler &scheduler, bool disableMag) : Task_Periodic("MPU9250 Driver", 1 * Core::MILLISECONDS)
     {
         disableMag_ = disableMag;
         ioBus_ = &ioBus;
@@ -52,6 +52,7 @@ namespace VCTR
         if (!initSensor(*ioBus_))
         {
             Core::printE("MPU9250 taskInit(): failed to init sensor!\n");
+            setRelease(Core::END_OF_TIME);
             return;
         }
     }
@@ -68,7 +69,7 @@ namespace VCTR
 
     // ### Below is MPU9250 Implementation ###
 
-    SNSR::MPU9250::MPU9250(bool disableMag = false)
+    SNSR::MPU9250::MPU9250(bool disableMag)
     {
         disableMag_ = disableMag;
     }
@@ -238,7 +239,7 @@ namespace VCTR
 
         if (!Read())
         {
-            VCTR::Core::printW("MPU9250 readAll(): Something went wrong reading sensor values!\n");
+            //VCTR::Core::printW("MPU9250 readAll(): Something went wrong reading sensor values!\n");
             return false;
         }
 
