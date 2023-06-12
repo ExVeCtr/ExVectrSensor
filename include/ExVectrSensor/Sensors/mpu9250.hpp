@@ -19,7 +19,7 @@
 #include "ExVectrCore/task_types.hpp"
 #include "ExVectrCore/scheduler2.hpp"
 
-#include "ExVectrHAL/io.hpp"
+#include "ExVectrHAL/digital_io.hpp"
 
 #include "../gyroscope.hpp"
 #include "../accelerometer.hpp"
@@ -38,7 +38,7 @@ namespace VCTR
         class MPU9250 : public Gyroscope, public Accelerometer, public Magnetometer
         {
         protected:
-            HAL::IO *ioBus_ = nullptr;
+            HAL::DigitalIO *ioBus_ = nullptr;
 
             bool initialised_ = false;
 
@@ -86,7 +86,7 @@ namespace VCTR
              * @param ioBus Input/Output bus the sensor is connected to. Should be a single connection not true bus.
              * @return true if initialisation successfull.
              */
-            bool initSensor(HAL::IO &ioBus);
+            bool initSensor(HAL::DigitalIO &ioBus);
 
             /**
              * @brief Implements reading gyro values and publishing them to the topic.
@@ -112,24 +112,6 @@ namespace VCTR
              * @returns true if all could be read, false if one or more failed.
              */
             bool readAll();
-
-            /**
-             * @brief The lowest interval to read the magnetometer at.
-             * @return Interval in nanoseconds
-             */
-            int64_t getMagInterval() const override;
-
-            /**
-             * @brief The lowest interval to read the accelerometer at.
-             * @return Interval in nanoseconds
-             */
-            int64_t getAccelInterval() const override;
-
-            /**
-             * @brief The lowest interval to read the gyroscope at.
-             * @return Interval in nanoseconds
-             */
-            int64_t getGyroInterval() const override;
 
         protected:
             /**
@@ -236,7 +218,7 @@ namespace VCTR
              * @param ioBus The bus connection with MPU9250.
              * @param disableMag If true then mag will be disabled and not used.
              */
-            MPU9250Driver(HAL::IO &ioBus, bool disableMag = false);
+            MPU9250Driver(HAL::DigitalIO &ioBus, bool disableMag = false);
 
             /**
              * @brief Constructor that uses the given scheduler.
@@ -244,7 +226,7 @@ namespace VCTR
              * @param scheduler Scheduler to use for this driver.
              * @param disableMag If true then mag will be disabled and not used.
              */
-            MPU9250Driver(HAL::IO &ioBus, Core::Scheduler& scheduler, bool disableMag = false);
+            MPU9250Driver(HAL::DigitalIO &ioBus, Core::Scheduler& scheduler, bool disableMag = false);
 
             /**
              * @brief Initialises sensor and expected to be called once at start by scheduler

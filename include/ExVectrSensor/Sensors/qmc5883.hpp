@@ -4,7 +4,7 @@
 #include "ExVectrCore/task_types.hpp"
 #include "ExVectrCore/scheduler2.hpp"
 
-#include "ExVectrHAL/io.hpp"
+#include "ExVectrHAL/digital_io.hpp"
 
 #include "../magnetometer.hpp"
 
@@ -21,7 +21,7 @@ namespace VCTR
         {
         protected:
             /// IO Bus to use for chip communications.
-            HAL::IO *ioBus_ = nullptr;
+            HAL::DigitalIO *ioBus_ = nullptr;
             /// If the sensor has been successfully initialised and is in working condition
             bool initialised_ = false;
 
@@ -47,7 +47,7 @@ namespace VCTR
              * @param ioBus Which bus to use for communications.
              * @return true if successfull and sensor is running, false otherwise.
              */
-            bool initSensor(HAL::IO &ioBus);
+            bool initSensor(HAL::DigitalIO &ioBus);
 
             /**
              * @brief Makes the sensor read the values and publish them to the topic.
@@ -55,12 +55,6 @@ namespace VCTR
              * @return true if reading was successfull. False otherwise.
              */
             bool readMag() override;
-
-            /**
-             * @brief The lowest interval to read the magnetometer at.
-             * @return Interval in nanoseconds
-             */
-            int64_t getMagInterval() const override;
 
         private:
             /**
@@ -80,14 +74,14 @@ namespace VCTR
              * @brief Constructor that uses the standard system scheduler.
              * @param ioBus The bus connection with sensor.
              */
-            QMC5883Driver(HAL::IO &ioBus);
+            QMC5883Driver(HAL::DigitalIO &ioBus);
 
             /**
              * @brief Constructor that uses the given scheduler.
              * @param ioBus The bus connection with sensor.
              * @param scheduler Scheduler to use for this driver.
              */
-            QMC5883Driver(HAL::IO &ioBus, Core::Scheduler &scheduler);
+            QMC5883Driver(HAL::DigitalIO &ioBus, Core::Scheduler &scheduler);
 
             /**
              * @brief Initialises sensor and expected to be called once at start by scheduler

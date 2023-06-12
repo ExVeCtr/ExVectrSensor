@@ -3,7 +3,7 @@
 namespace VCTR
 {
 
-    const Core::Topic<Core::Timestamped<Data::ValueCov<float, 3>>> &SNSR::Gyroscope::getGyroTopic() const {
+    Core::Topic<Core::Timestamped<Data::ValueCov<float, 3>>> &SNSR::Gyroscope::getGyroTopic() {
         return gyroTopic_;
     }
 

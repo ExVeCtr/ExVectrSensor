@@ -19,7 +19,7 @@
 #include "ExVectrCore/task_types.hpp"
 #include "ExVectrCore/scheduler2.hpp"
 
-#include "ExVectrHAL/io.hpp"
+#include "ExVectrHAL/digital_io.hpp"
 
 #include "../barometer.hpp"
 
@@ -143,7 +143,7 @@ namespace VCTR
             SensorCalibration calibration;
             int32_t t_fine;
 
-            HAL::IO *ioBus_ = nullptr;
+            HAL::DigitalIO *ioBus_ = nullptr;
             bool initialised_ = false;
 
         public:
@@ -157,13 +157,7 @@ namespace VCTR
              * @param ioBus Input/Output bus the sensor is connected to. Should be a single connection not true bus.
              * @return true if initialisation successfull.
              */
-            bool initSensor(HAL::IO &ioBus);
-
-            /**
-             * @brief The lowest interval to read the barometer at.
-             * @return Interval in nanoseconds.
-             */
-            int64_t getBaroInterval() const override;
+            bool initSensor(HAL::DigitalIO &ioBus);
 
             /**
              * @brief Reads all data from BME280 and publishes it to topics.
@@ -240,14 +234,14 @@ namespace VCTR
              * @brief Constructor that uses the standard system scheduler.
              * @param ioBus The bus connection with sensor.
              */
-            BME280Driver(HAL::IO &ioBus);
+            BME280Driver(HAL::DigitalIO &ioBus);
 
             /**
              * @brief Constructor that uses the given scheduler.
              * @param ioBus The bus connection with sensor.
              * @param scheduler Scheduler to use for this driver.
              */
-            BME280Driver(HAL::IO &ioBus, Core::Scheduler& scheduler);
+            BME280Driver(HAL::DigitalIO &ioBus, Core::Scheduler& scheduler);
 
             /**
              * @brief Initialises sensor and expected to be called once at start by scheduler

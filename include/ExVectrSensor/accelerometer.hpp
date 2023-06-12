@@ -25,7 +25,7 @@ namespace VCTR
              * @brief Gets the accelerometer topic where new accelerometer values are published in [m/s/s] in sensor frame.
              * @returns accelerometer topic.
              */
-            const Core::Topic<Core::Timestamped<Data::ValueCov<float, 3>>> &getAccelTopic() const;
+            Core::Topic<Core::Timestamped<Data::ValueCov<float, 3>>> &getAccelTopic();
 
             /**
              * @brief Makes the sensor read the values and publish them to the topic.
@@ -33,12 +33,6 @@ namespace VCTR
              * @return true if reading was successfull. False otherwise.
              */
             virtual bool readAccel() = 0;
-
-            /**
-             * @brief The lowest interval to read the accel at.
-             * @return Interval in nanoseconds.
-             */
-            virtual int64_t getAccelInterval() const = 0;
         };
 
     }

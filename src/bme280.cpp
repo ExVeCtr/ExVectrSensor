@@ -29,14 +29,14 @@ using namespace VCTR;
 
 // ### Below is MPU9250Driver Implementation ###
 
-SNSR::BME280Driver::BME280Driver(HAL::IO &ioBus) : Task_Periodic("BME280 Driver", 20 * Core::MILLISECONDS)
+SNSR::BME280Driver::BME280Driver(HAL::DigitalIO &ioBus) : Task_Periodic("BME280 Driver", 20 * Core::MILLISECONDS)
 {
     ioBus_ = &ioBus;
     Core::getSystemScheduler().addTask(*this);
     setPriority(1000);
 }
 
-SNSR::BME280Driver::BME280Driver(HAL::IO &ioBus, Core::Scheduler &scheduler) : Task_Periodic("BME280 Driver", 20 * Core::MILLISECONDS)
+SNSR::BME280Driver::BME280Driver(HAL::DigitalIO &ioBus, Core::Scheduler &scheduler) : Task_Periodic("BME280 Driver", 20 * Core::MILLISECONDS)
 {
     ioBus_ = &ioBus;
     scheduler.addTask(*this);
@@ -95,7 +95,7 @@ SNSR::BME280::BME280(void)
 //  configure before calling .begin();
 //
 //****************************************************************************//
-bool SNSR::BME280::initSensor(HAL::IO &ioBus)
+bool SNSR::BME280::initSensor(HAL::DigitalIO &ioBus)
 {
 
     if (ioBus.getInputType() != HAL::IO_TYPE_t::BUS_I2C && ioBus.getInputType() != HAL::IO_TYPE_t::BUS_SPI)
@@ -114,20 +114,20 @@ bool SNSR::BME280::initSensor(HAL::IO &ioBus)
 
     if (ioBus_->getInputType() == HAL::IO_TYPE_t::BUS_I2C)
     {
-        ioBus_->setInputParam(HAL::IO_PARAM_t::PARAM_SPEED, 400000);
+        ioBus_->setInputParam(HAL::IO_PARAM_t::SPEED, 400000);
     }
     else
     {
-        ioBus_->setInputParam(HAL::IO_PARAM_t::PARAM_SPIMODE, 0);
+        ioBus_->setInputParam(HAL::IO_PARAM_t::SPI_MODE, 0);
     }
 
     if (ioBus_->getOutputType() == HAL::IO_TYPE_t::BUS_I2C)
     {
-        ioBus_->setOutputParam(HAL::IO_PARAM_t::PARAM_SPEED, 400000);
+        ioBus_->setOutputParam(HAL::IO_PARAM_t::SPEED, 400000);
     }
     else
     {
-        ioBus_->setOutputParam(HAL::IO_PARAM_t::PARAM_SPIMODE, 0);
+        ioBus_->setOutputParam(HAL::IO_PARAM_t::SPI_MODE, 0);
     }
 
     // Check communication with IC before anything else
@@ -207,11 +207,6 @@ bool SNSR::BME280::readSensorData()
     baroTopic_.publish(Core::Timestamped<Data::ValueCov<float, 1>>(baroVal, time));
 
     return true;
-}
-
-int64_t SNSR::BME280::getBaroInterval() const
-{
-    return 20 * Core::MILLISECONDS;
 }
 
 bool SNSR::BME280::readBaro()
@@ -685,7 +680,7 @@ void SNSR::BME280::readRegisterRegion(uint8_t *outputPointer, uint8_t offset, ui
     if (ioBus_->getInputType() == HAL::IO_TYPE_t::BUS_I2C)
     {
 
-        ioBus_->setOutputParam(HAL::IO_PARAM_t::PARAM_SPEED, 500000);
+        ioBus_->setOutputParam(HAL::IO_PARAM_t::SPEED, 500000);
         ioBus_->writeByte(offset, true);
 
         ioBus_->readData(outputPointer, length, true);
@@ -693,9 +688,9 @@ void SNSR::BME280::readRegisterRegion(uint8_t *outputPointer, uint8_t offset, ui
     else
     {
 
-        ioBus_->setOutputParam(HAL::IO_PARAM_t::PARAM_SPEED, BME280_SPI_CLOCK);
-        ioBus_->setOutputParam(HAL::IO_PARAM_t::PARAM_MSBFIRST, true);
-        ioBus_->setOutputParam(HAL::IO_PARAM_t::PARAM_SPIMODE, 0);
+        ioBus_->setOutputParam(HAL::IO_PARAM_t::SPEED, BME280_SPI_CLOCK);
+        ioBus_->setOutputParam(HAL::IO_PARAM_t::MSB_FIRST, true);
+        ioBus_->setOutputParam(HAL::IO_PARAM_t::SPI_MODE, 0);
 
         ioBus_->writeByte(offset | 0x80, false);
         ioBus_->readData(outputPointer, length, true);
@@ -726,15 +721,15 @@ void SNSR::BME280::writeRegister(uint8_t offset, uint8_t dataToWrite)
 
     if (ioBus_->getOutputType() == HAL::IO_TYPE_t::BUS_I2C)
     {
-        ioBus_->setOutputParam(HAL::IO_PARAM_t::PARAM_SPEED, 500000);
+        ioBus_->setOutputParam(HAL::IO_PARAM_t::SPEED, 500000);
         ioBus_->writeByte(offset, false);
         ioBus_->writeByte(dataToWrite, true);
     }
     else
     {
-        ioBus_->setOutputParam(HAL::IO_PARAM_t::PARAM_SPEED, BME280_SPI_CLOCK);
-        ioBus_->setOutputParam(HAL::IO_PARAM_t::PARAM_MSBFIRST, true);
-        ioBus_->setOutputParam(HAL::IO_PARAM_t::PARAM_SPIMODE, 0);
+        ioBus_->setOutputParam(HAL::IO_PARAM_t::SPEED, BME280_SPI_CLOCK);
+        ioBus_->setOutputParam(HAL::IO_PARAM_t::MSB_FIRST, true);
+        ioBus_->setOutputParam(HAL::IO_PARAM_t::SPI_MODE, 0);
 
         ioBus_->writeByte(offset & ~0x80, false);
         ioBus_->writeByte(dataToWrite, true);

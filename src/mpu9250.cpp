@@ -26,7 +26,7 @@ namespace VCTR
 
     // ### Below is MPU9250Driver Implementation ###
 
-    SNSR::MPU9250Driver::MPU9250Driver(HAL::IO &ioBus, bool disableMag) : Task_Periodic("MPU9250 Driver", 1 * Core::MILLISECONDS)
+    SNSR::MPU9250Driver::MPU9250Driver(HAL::DigitalIO &ioBus, bool disableMag) : Task_Periodic("MPU9250 Driver", 1 * Core::MILLISECONDS)
     {
         disableMag_ = disableMag;
         ioBus_ = &ioBus;
@@ -34,7 +34,7 @@ namespace VCTR
         setPriority(1000);
     }
 
-    SNSR::MPU9250Driver::MPU9250Driver(HAL::IO &ioBus, Core::Scheduler &scheduler, bool disableMag) : Task_Periodic("MPU9250 Driver", 1 * Core::MILLISECONDS)
+    SNSR::MPU9250Driver::MPU9250Driver(HAL::DigitalIO &ioBus, Core::Scheduler &scheduler, bool disableMag) : Task_Periodic("MPU9250 Driver", 1 * Core::MILLISECONDS)
     {
         disableMag_ = disableMag;
         ioBus_ = &ioBus;
@@ -74,7 +74,7 @@ namespace VCTR
         disableMag_ = disableMag;
     }
 
-    bool SNSR::MPU9250::initSensor(HAL::IO &ioBus)
+    bool SNSR::MPU9250::initSensor(HAL::DigitalIO &ioBus)
     {
 
         if (ioBus.getInputType() != HAL::IO_TYPE_t::BUS_I2C && ioBus.getInputType() != HAL::IO_TYPE_t::BUS_SPI)
@@ -93,24 +93,24 @@ namespace VCTR
 
         if (ioBus_->getInputType() == HAL::IO_TYPE_t::BUS_I2C)
         {
-            ioBus_->setInputParam(HAL::IO_PARAM_t::PARAM_SPEED, 400000);
+            ioBus_->setInputParam(HAL::IO_PARAM_t::SPEED, 400000);
         }
         else
         {
-            ioBus_->setOutputParam(HAL::IO_PARAM_t::PARAM_SPEED, spi_clock_);
-            ioBus_->setOutputParam(HAL::IO_PARAM_t::PARAM_MSBFIRST, true);
-            ioBus_->setOutputParam(HAL::IO_PARAM_t::PARAM_SPIMODE, 3);
+            ioBus_->setOutputParam(HAL::IO_PARAM_t::SPEED, spi_clock_);
+            ioBus_->setOutputParam(HAL::IO_PARAM_t::MSB_FIRST, true);
+            ioBus_->setOutputParam(HAL::IO_PARAM_t::SPI_MODE, 3);
         }
 
         if (ioBus_->getOutputType() == HAL::IO_TYPE_t::BUS_I2C)
         {
-            ioBus_->setOutputParam(HAL::IO_PARAM_t::PARAM_SPEED, 400000);
+            ioBus_->setOutputParam(HAL::IO_PARAM_t::SPEED, 400000);
         }
         else
         {
-            ioBus_->setOutputParam(HAL::IO_PARAM_t::PARAM_SPEED, spi_clock_);
-            ioBus_->setOutputParam(HAL::IO_PARAM_t::PARAM_MSBFIRST, true);
-            ioBus_->setOutputParam(HAL::IO_PARAM_t::PARAM_SPIMODE, 3);
+            ioBus_->setOutputParam(HAL::IO_PARAM_t::SPEED, spi_clock_);
+            ioBus_->setOutputParam(HAL::IO_PARAM_t::MSB_FIRST, true);
+            ioBus_->setOutputParam(HAL::IO_PARAM_t::SPI_MODE, 3);
         }
 
         if (disableMag_)
@@ -277,21 +277,6 @@ namespace VCTR
         magTopic_.publish(Core::Timestamped<Data::ValueCov<float, 3>>(magVals, time));
 
         return true;
-    }
-
-    int64_t SNSR::MPU9250::getMagInterval() const
-    {
-        return 10 * Core::MILLISECONDS;
-    }
-
-    int64_t SNSR::MPU9250::getAccelInterval() const
-    {
-        return 1 * Core::MILLISECONDS;
-    }
-
-    int64_t SNSR::MPU9250::getGyroInterval() const
-    {
-        return 1 * Core::MILLISECONDS;
     }
 
     /**

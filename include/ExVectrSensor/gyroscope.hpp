@@ -25,7 +25,7 @@ namespace VCTR
              * @brief Gets the gyroscope topic where new gyroscope values are published in [rad/s] in sensor frame.
              * @returns gyroscope topic.
              */
-            const Core::Topic<Core::Timestamped<Data::ValueCov<float, 3>>> &getGyroTopic() const;
+            Core::Topic<Core::Timestamped<Data::ValueCov<float, 3>>> &getGyroTopic();
 
             /**
              * @brief Makes the sensor read the values and publish them to the topic.
@@ -33,12 +33,6 @@ namespace VCTR
              * @return true if reading was successfull. False otherwise.
              */
             virtual bool readGyro() = 0;
-
-            /**
-             * @brief The lowest interval to read the gyroscope at.
-             * @return Interval in nanoseconds
-             */
-            virtual int64_t getGyroInterval() const = 0;
         };
 
     }

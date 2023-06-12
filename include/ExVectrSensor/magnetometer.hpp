@@ -25,7 +25,7 @@ namespace VCTR
              * @brief Gets the magnetometer topic where new magnetometer values are published in [tesla] in sensor frame.
              * @returns magnetometer topic.
              */
-            const Core::Topic<Core::Timestamped<Data::ValueCov<float, 3>>> &getMagTopic() const;
+            Core::Topic<Core::Timestamped<Data::ValueCov<float, 3>>> &getMagTopic();
 
             /**
              * @brief Makes the sensor read the values and publish them to the topic.
@@ -33,12 +33,6 @@ namespace VCTR
              * @return true if reading was successfull. False otherwise.
              */
             virtual bool readMag() = 0;
-
-            /**
-             * @brief The lowest interval to read the magnetometer at.
-             * @return Interval in nanoseconds.
-             */
-            virtual int64_t getMagInterval() const = 0;
         };
 
     }

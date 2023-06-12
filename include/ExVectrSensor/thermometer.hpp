@@ -25,7 +25,7 @@ namespace VCTR
              * @brief Gets the thermometer topic where new thermometer values are published in degrees celsius.
              * @returns thermometer topic.
              */
-            const Core::Topic<Core::Timestamped<Data::ValueCov<float, 1>>> &getThermoTopic() const;
+            Core::Topic<Core::Timestamped<Data::ValueCov<float, 1>>> &getThermoTopic();
 
             /**
              * @brief Makes the sensor read the thermometer and publish the sensor values.
@@ -33,12 +33,6 @@ namespace VCTR
              * @return true if reading was successfull. False otherwise.
              */
             virtual bool readBaro() = 0;
-
-            /**
-             * @brief The lowest interval to read the thermometer at.
-             * @return Interval in nanoseconds
-             */
-            virtual int64_t getThermoInterval() const = 0;
         };
 
     }

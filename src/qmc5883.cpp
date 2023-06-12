@@ -14,14 +14,14 @@
 using namespace VCTR;
 
 
-SNSR::QMC5883Driver::QMC5883Driver(HAL::IO &ioBus) : Task_Periodic("QMC5883 Driver", 20 * Core::MILLISECONDS)
+SNSR::QMC5883Driver::QMC5883Driver(HAL::DigitalIO &ioBus) : Task_Periodic("QMC5883 Driver", 20 * Core::MILLISECONDS)
 {
     ioBus_ = &ioBus;
     Core::getSystemScheduler().addTask(*this);
     setPriority(1000);
 }
 
-SNSR::QMC5883Driver::QMC5883Driver(HAL::IO &ioBus, Core::Scheduler &scheduler) : Task_Periodic("QMC5883 Driver", 20 * Core::MILLISECONDS)
+SNSR::QMC5883Driver::QMC5883Driver(HAL::DigitalIO &ioBus, Core::Scheduler &scheduler) : Task_Periodic("QMC5883 Driver", 20 * Core::MILLISECONDS)
 {
     ioBus_ = &ioBus;
     scheduler.addTask(*this);
@@ -92,11 +92,6 @@ bool SNSR::QMC5883::readMag()
     return true;
 }
 
-int64_t SNSR::QMC5883::getMagInterval() const
-{
-    return 10 * Core::MILLISECONDS;
-}
-
 bool SNSR::QMC5883::dataAvailable()
 {
 
@@ -117,7 +112,7 @@ bool SNSR::QMC5883::dataAvailable()
     return (byte & 0b00000001) == 0b00000001;
 }
 
-bool SNSR::QMC5883::initSensor(HAL::IO &ioBus)
+bool SNSR::QMC5883::initSensor(HAL::DigitalIO &ioBus)
 {
 
     if (ioBus.getInputType() != HAL::IO_TYPE_t::BUS_I2C)
