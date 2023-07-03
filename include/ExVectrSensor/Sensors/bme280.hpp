@@ -4,9 +4,9 @@
  *
  * Marshall Taylor @ SparkFun Electronics
  * May 20, 2015
- * https://github.com/sparkfun/BME280_Breakout
+ * https://github.com/sparkfun/SparkFun_BME280_Arduino_Library
  *
- * Original implementation: https://github.com/sparkfun/BME280_Breakout
+ * Original implementation: https://github.com/sparkfun/SparkFun_BME280_Arduino_Library
  *
  * Heavily modified for use with the ExVectrSensor library with some extra features.
  *
