@@ -248,7 +248,6 @@ namespace VCTR
         gyroVals.val(1) = gyro_y_radps();
         gyroVals.val(2) = gyro_z_radps();
         gyroVals.cov = gyroVariance_;
-
         gyroTopic_.publish(Core::Timestamped<Data::ValueCov<float, 3>>(gyroVals, time));
 
         Data::ValueCov<float, 3> accelVals;
@@ -256,7 +255,6 @@ namespace VCTR
         accelVals.val(1) = accel_y_mps2();
         accelVals.val(2) = accel_z_mps2();
         accelVals.cov = accelVariance_;
-
         accelTopic_.publish(Core::Timestamped<Data::ValueCov<float, 3>>(accelVals, time));
 
         if (disableMag_)
@@ -264,7 +262,7 @@ namespace VCTR
 
         if (akFailure_)
         {
-            VCTR::Core::printE("MPU9250 readMag(): Mag failed!\n");
+            //VCTR::Core::printE("MPU9250 readMag(): Mag failed!\n");
             return false;
         }
 
@@ -826,9 +824,10 @@ namespace VCTR
     bool SNSR::MPU9250::WriteRegister(uint8_t reg, uint8_t data)
     {
         uint8_t ret_val;
+        bool failure = false;
 
-        ioBus_->writeByte(reg, false);
-        ioBus_->writeByte(data, true);
+        failure |= ioBus_->writeByte(reg, false);
+        failure |= ioBus_->writeByte(data, true);
 
         VCTR::Core::delay(VCTR::Core::MILLISECONDS * 10);
         ReadRegisters(reg, sizeof(ret_val), &ret_val);
@@ -847,7 +846,7 @@ namespace VCTR
     {
         if (ioBus_->getInputType() == HAL::IO_TYPE_t::BUS_I2C)
         {
-            ioBus_->writeByte(reg, true);
+            ioBus_->writeByte(reg, false);
         }
         else
         {
