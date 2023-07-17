@@ -25,21 +25,26 @@ namespace VCTR
             /// If the sensor has been successfully initialised and is in working condition
             bool initialised_ = false;
 
+            int64_t lastSensorData_ = 0;
+
+            //Sensor covariance
+            float cov_ = 0.05f;
+
             static constexpr uint8_t QMC5883L_ADDR_DEFAULT = 0x0D;
-            static constexpr uint8_t QMC5883L_X_LSB = 0;
-            static constexpr uint8_t QMC5883L_X_MSB = 1;
-            static constexpr uint8_t QMC5883L_Y_LSB = 2;
-            static constexpr uint8_t QMC5883L_Y_MSB = 3;
-            static constexpr uint8_t QMC5883L_Z_LSB = 4;
-            static constexpr uint8_t QMC5883L_Z_MSB = 5;
-            static constexpr uint8_t QMC5883L_STATUS = 6;
-            static constexpr uint8_t QMC5883L_TEMP_LSB = 7;
-            static constexpr uint8_t QMC5883L_TEMP_MSB = 8;
-            static constexpr uint8_t QMC5883L_CONFIG = 9;
-            static constexpr uint8_t QMC5883L_CONFIG2 = 10;
-            static constexpr uint8_t QMC5883L_RESET = 11;
-            static constexpr uint8_t QMC5883L_RESERVED = 12;
-            static constexpr uint8_t QMC5883L_CHIP_ID = 13;
+            static constexpr uint8_t QMC5883L_X_LSB = 0; //Addr. 00H
+            static constexpr uint8_t QMC5883L_X_MSB = 1; //Addr. 01H
+            static constexpr uint8_t QMC5883L_Y_LSB = 2; //Addr. 02H
+            static constexpr uint8_t QMC5883L_Y_MSB = 3; //Addr. 03H
+            static constexpr uint8_t QMC5883L_Z_LSB = 4; //Addr. 04H
+            static constexpr uint8_t QMC5883L_Z_MSB = 5; //Addr. 05H
+            static constexpr uint8_t QMC5883L_STATUS = 6; //Addr. 06H, 0 - data ready, 1 - data overflow
+            static constexpr uint8_t QMC5883L_TEMP_LSB = 7; //Addr. 07H
+            static constexpr uint8_t QMC5883L_TEMP_MSB = 8; //Addr. 08H
+            static constexpr uint8_t QMC5883L_CONFIG = 9; //Addr. 09H
+            static constexpr uint8_t QMC5883L_CONFIG2 = 10; //Addr. 0AH
+            static constexpr uint8_t QMC5883L_RESET = 11; //Addr. 0BH
+            static constexpr uint8_t QMC5883L_RESERVED = 12; //Addr. 0CH
+            static constexpr uint8_t QMC5883L_CHIP_ID = 13; //Addr. 0DH
 
         public:
             /**

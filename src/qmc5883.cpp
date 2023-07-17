@@ -13,19 +13,18 @@
 
 using namespace VCTR;
 
-
 SNSR::QMC5883Driver::QMC5883Driver(HAL::DigitalIO &ioBus) : Task_Periodic("QMC5883 Driver", 20 * Core::MILLISECONDS)
 {
     ioBus_ = &ioBus;
     Core::getSystemScheduler().addTask(*this);
-    setPriority(1000);
+    // setPriority(1000);
 }
 
 SNSR::QMC5883Driver::QMC5883Driver(HAL::DigitalIO &ioBus, Core::Scheduler &scheduler) : Task_Periodic("QMC5883 Driver", 20 * Core::MILLISECONDS)
 {
     ioBus_ = &ioBus;
     scheduler.addTask(*this);
-    setPriority(1000);
+    // setPriority(1000);
 }
 
 void SNSR::QMC5883Driver::taskInit()
@@ -40,6 +39,10 @@ void SNSR::QMC5883Driver::taskInit()
         Core::printE("QMC5883 Driver taskInit(): failed to init sensor!\n");
         return;
     }
+    else
+    {
+        Core::printD("QMC5883 Driver taskInit(): sensor start successful!\n");
+    }
 }
 
 void SNSR::QMC5883Driver::taskThread()
@@ -52,7 +55,6 @@ void SNSR::QMC5883Driver::taskThread()
     readMag();
 }
 
-
 bool SNSR::QMC5883::readMag()
 {
 
@@ -63,9 +65,17 @@ bool SNSR::QMC5883::readMag()
     }
 
     if (!dataAvailable())
-        return false;
+    {
 
-    int64_t time = Core::NOW();
+        if (Core::NOW() - lastSensorData_ > 500 * Core::MILLISECONDS)
+        {
+            Core::printW("QMC5883 readMag(): no data available for more than 100ms! Something has failed!\n");
+        }
+
+        return false;
+    }
+
+    int64_t time = lastSensorData_ = Core::NOW();
     uint8_t buffer[6];
 
     !ioBus_->writeByte(QMC5883L_X_LSB, false);
@@ -84,7 +94,7 @@ bool SNSR::QMC5883::readMag()
     buf.data.val[0][0] = (float)x * 8.0f / 32767.0f;
     buf.data.val[1][0] = (float)y * 8.0f / 32767.0f;
     buf.data.val[2][0] = (float)z * 8.0f / 32767.0f;
-    buf.data.cov = Math::Matrix<float, 3, 3>::eye(0.006);
+    buf.data.cov = Math::Matrix<float, 3, 3>::eye(cov_);
     buf.timestamp = time;
 
     magTopic_.publish(buf);
@@ -115,6 +125,8 @@ bool SNSR::QMC5883::dataAvailable()
 bool SNSR::QMC5883::initSensor(HAL::DigitalIO &ioBus)
 {
 
+    lastSensorData_ = Core::NOW();
+
     if (ioBus.getInputType() != HAL::IO_TYPE_t::BUS_I2C)
     {
         VCTR::Core::printE("QMC5883 given incorrect input type. Must be I2C. Given type: %d.\n", ioBus.getInputType());
@@ -127,16 +139,13 @@ bool SNSR::QMC5883::initSensor(HAL::DigitalIO &ioBus)
         return false;
     }
 
-    // uint8_t byte;
-    // if (!readByte(address_, QMC5883Registers::QMC5883L_CHIP_ID, &byte)) failed = true;
-
     ioBus_ = &ioBus;
 
     uint16_t writeError = false;
 
     uint8_t b = 0;
-    writeError |= !ioBus_->writeByte(QMC5883L_CHIP_ID);
-    writeError |= !ioBus_->readByte(b)<<1;
+    writeError |= !ioBus_->writeByte(QMC5883L_CHIP_ID, false); // Read chip ID
+    writeError |= !ioBus_->readByte(b) << 1;
 
     if (b != 0xFF)
     {
@@ -144,21 +153,19 @@ bool SNSR::QMC5883::initSensor(HAL::DigitalIO &ioBus)
         return false;
     }
 
-    writeError |= !ioBus_->writeByte(QMC5883L_CONFIG2, false)<<2;
-    writeError |= !ioBus_->writeByte(0b10000000)<<3;
+    writeError |= !ioBus_->writeByte(QMC5883L_CONFIG2, false) << 2; // Do software reset
+    writeError |= !ioBus_->writeByte(0b10000000) << 3;
 
     Core::delay(10 * Core::MILLISECONDS);
 
-    writeError |= !ioBus_->writeByte(QMC5883L_RESET, false)<<4;
-    writeError |= !ioBus_->writeByte(0x01)<<5;
+    writeError |= !ioBus_->writeByte(QMC5883L_RESET, false) << 4; 
+    writeError |= !ioBus_->writeByte(0x01) << 5;
 
-    writeError |= !ioBus_->writeByte(QMC5883L_CONFIG, false)<<6;
-    writeError |= !ioBus_->writeByte(0b00011101)<<7;
+    writeError |= !ioBus_->writeByte(QMC5883L_CONFIG, false) << 6;
+    writeError |= !ioBus_->writeByte(0b00011101) << 7; 
 
-    writeError |= !ioBus_->writeByte(QMC5883L_CONFIG2, false)<<8;
-    writeError |= !ioBus_->writeByte(0b00000000)<<9;
-
-    if (writeError) {
+    if (writeError)
+    {
         Core::printE("BME280: Init write failed! Code: %d\n", writeError);
         return false;
     }
