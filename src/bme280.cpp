@@ -196,20 +196,49 @@ bool SNSR::BME280::readSensorData()
 
     int64_t time = VCTR::Core::NOW();
     float pressure = readFloatPressure();
+    float humidity = readFloatHumidity();
+    float temperature = readTempC();
 
-    if (pressure == 0)
-        return false;
+    if (pressure != 0) {
 
-    Data::ValueCov<float, 1> baroVal;
-    baroVal.val(0) = pressure;
-    baroVal.cov = 0.5;
+        Data::ValueCov<float, 1> baroVal;
+        baroVal.val(0) = pressure;
+        baroVal.cov = 0.5;
 
-    baroTopic_.publish(Core::Timestamped<Data::ValueCov<float, 1>>(baroVal, time));
+        baroTopic_.publish(Core::Timestamped<Data::ValueCov<float, 1>>(baroVal, time));
+
+    }
+
+    if (humidity != 0) {
+
+        Data::ValueCov<float, 1> humVal;
+        humVal.val(0) = humidity;
+        humVal.cov = 0.5;
+
+        //humTopic_.publish(Core::Timestamped<Data::ValueCov<float, 1>>(humVal, time));
+
+    }
+
+    if (temperature != 0) {
+
+        Data::ValueCov<float, 1> tempVal;
+        tempVal.val(0) = temperature;
+        tempVal.cov = 0.5;
+
+        thermTopic_.publish(Core::Timestamped<Data::ValueCov<float, 1>>(tempVal, time));
+
+    }
 
     return true;
 }
 
 bool SNSR::BME280::readBaro()
+{
+
+    return readSensorData();
+}
+
+bool SNSR::BME280::readTherm()
 {
 
     return readSensorData();

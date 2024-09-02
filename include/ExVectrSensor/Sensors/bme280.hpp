@@ -22,6 +22,7 @@
 #include "ExVectrHAL/digital_io.hpp"
 
 #include "../barometer.hpp"
+#include "../thermometer.hpp"
 
 namespace VCTR
 {
@@ -29,7 +30,7 @@ namespace VCTR
     namespace SNSR
     {
 
-        class BME280 : public Barometer
+        class BME280 : public Barometer, public Thermometer
         {
         public:
 
@@ -166,6 +167,7 @@ namespace VCTR
             bool readSensorData();
 
             bool readBaro() override;
+            bool readTherm() override;
 
             uint8_t getMode(void);      // Get the current mode: sleep, forced, or normal
             void setMode(uint8_t mode); // Set the current mode
