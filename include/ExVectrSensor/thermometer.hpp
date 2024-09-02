@@ -32,7 +32,7 @@ namespace VCTR
              * @note Implemented by child class.
              * @return true if reading was successfull. False otherwise.
              */
-            virtual bool readBaro() = 0;
+            virtual bool readTherm() = 0;
         };
 
     }
