@@ -135,6 +135,7 @@ bool SNSR::BME280::initSensor(HAL::DigitalIO &ioBus)
     if (chipID == 0x58)
     {
         VCTR::Core::printD("BME280 Driver: Connected sensor is BMP.\n");
+        noHumidity_ = true;
     }
     else if (chipID == 0x60)
     {
@@ -196,7 +197,7 @@ bool SNSR::BME280::readSensorData()
 
     int64_t time = VCTR::Core::NOW();
     float pressure = readFloatPressure();
-    float humidity = readFloatHumidity();
+    float humidity = readFloatHumidity()/100.0;
     float temperature = readTempC();
 
     if (pressure != 0) {
@@ -209,13 +210,13 @@ bool SNSR::BME280::readSensorData()
 
     }
 
-    if (humidity != 0) {
+    if (humidity != 0 && !noHumidity_) {
 
         Data::ValueCov<float, 1> humVal;
         humVal.val(0) = humidity;
         humVal.cov = 0.5;
 
-        //humTopic_.publish(Core::Timestamped<Data::ValueCov<float, 1>>(humVal, time));
+        hygroTopic_.publish(Core::Timestamped<Data::ValueCov<float, 1>>(humVal, time));
 
     }
 
@@ -233,6 +234,12 @@ bool SNSR::BME280::readSensorData()
 }
 
 bool SNSR::BME280::readBaro()
+{
+
+    return readSensorData();
+}
+
+bool SNSR::BME280::readHygro()
 {
 
     return readSensorData();
@@ -470,7 +477,7 @@ float SNSR::BME280::readFloatPressure(void)
     var2 = (((int64_t)calibration.dig_P8) * p_acc) >> 19;
     p_acc = ((p_acc + var1 + var2) >> 8) + (((int64_t)calibration.dig_P7) << 4);
 
-    return (float)p_acc / 256.0;
+    return (float)p_acc / 256.0 + presOffset_;
 }
 
 void SNSR::BME280::readFloatPressureFromBurst(uint8_t buffer[], BME280_SensorMeasurements *measurements)
@@ -572,7 +579,7 @@ float SNSR::BME280::readFloatHumidity(void)
     var1 = (var1 < 0 ? 0 : var1);
     var1 = (var1 > 419430400 ? 419430400 : var1);
 
-    return (float)(var1 >> 12) / 1024.0;
+    return (float)(var1 >> 12) / 1024.0 + humidityOffset_*100;
 }
 
 void SNSR::BME280::readFloatHumidityFromBurst(uint8_t buffer[], BME280_SensorMeasurements *measurements)
@@ -607,6 +614,31 @@ void SNSR::BME280::readFloatHumidityFromBurst(uint8_t buffer[], BME280_SensorMea
 void SNSR::BME280::setTemperatureCorrection(float corr)
 {
     settings.tempCorrection = corr;
+}
+
+float SNSR::BME280::getTemperatureCorrection(void)
+{
+    return settings.tempCorrection;
+}
+
+void SNSR::BME280::setHumidityOffset(float corr)
+{
+    humidityOffset_ = corr;
+}
+
+float SNSR::BME280::getHumidityOffset(void)
+{
+    return humidityOffset_;
+}
+
+void SNSR::BME280::setPressureOffset(float corr)
+{
+    presOffset_ = corr;
+}
+
+float SNSR::BME280::getPressureOffset(void)
+{
+    return presOffset_;
 }
 
 float SNSR::BME280::readTempC(void)

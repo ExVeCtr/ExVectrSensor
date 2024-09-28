@@ -23,6 +23,7 @@
 
 #include "../barometer.hpp"
 #include "../thermometer.hpp"
+#include "../hygrometer.hpp"
 
 namespace VCTR
 {
@@ -30,7 +31,7 @@ namespace VCTR
     namespace SNSR
     {
 
-        class BME280 : public Barometer, public Thermometer
+        class BME280 : public Barometer, public Thermometer, public Hygrometer
         {
         public:
 
@@ -147,6 +148,11 @@ namespace VCTR
             HAL::DigitalIO *ioBus_ = nullptr;
             bool initialised_ = false;
 
+            bool noHumidity_ = false;
+            float humidityOffset_ = 0.0;
+
+            float presOffset_ = 0.0;
+
         public:
             // Constructor generates default BME280_SensorSettings.
             //(over-ride after construction if desired)
@@ -167,6 +173,7 @@ namespace VCTR
             bool readSensorData();
 
             bool readBaro() override;
+            bool readHygro() override;
             bool readTherm() override;
 
             uint8_t getMode(void);      // Get the current mode: sleep, forced, or normal
@@ -192,12 +199,17 @@ namespace VCTR
             float readFloatAltitudeMeters(void);
             float readFloatAltitudeFeet(void);
             void readFloatPressureFromBurst(uint8_t buffer[], BME280_SensorMeasurements *measurements);
-
+            void setPressureOffset(float offset);
+            float getPressureOffset(void);
+            
+            void setHumidityOffset(float offset);
+            float getHumidityOffset(void);
             float readFloatHumidity(void);
             void readFloatHumidityFromBurst(uint8_t buffer[], BME280_SensorMeasurements *measurements);
 
             // Temperature related methods
             void setTemperatureCorrection(float corr);
+            float getTemperatureCorrection(void);
             float readTempC(void);
             float readTempF(void);
             float readTempFromBurst(uint8_t buffer[]);
