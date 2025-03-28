@@ -79,7 +79,7 @@ SNSR::BME280::BME280(void)
     // These are deprecated settings
     settings.runMode = 3;  // Normal/Run
     settings.tStandby = 0; // 0.5ms
-    settings.filter = 4;   // Filter off
+    settings.filter = 1;   // Filter off
     settings.tempOverSample = 16;
     settings.pressOverSample = 4;
     settings.humidOverSample = 16;
@@ -204,7 +204,7 @@ bool SNSR::BME280::readSensorData()
 
         Data::ValueCov<float, 1> baroVal;
         baroVal.val(0) = pressure;
-        baroVal.cov = 0.5;
+        baroVal.cov = 1;
 
         baroTopic_.publish(Core::Timestamped<Data::ValueCov<float, 1>>(baroVal, time));
 
