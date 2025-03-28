@@ -55,6 +55,8 @@ namespace VCTR
             setRelease(Core::END_OF_TIME);
             return;
         }
+
+        setPriority(200);
     }
 
     void SNSR::MPU9250Driver::taskThread()
