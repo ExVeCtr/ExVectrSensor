@@ -3,7 +3,7 @@
 
 #include "ExVectrCore/topic.hpp"
 #include "ExVectrCore/timestamped.hpp"
-#include "ExVectrData/value_covariance.hpp"
+#include "ExVectrDSP/value_covariance.hpp"
 
 namespace VCTR
 {
@@ -18,14 +18,14 @@ namespace VCTR
         {
         protected:
             /// @brief Topic to which new accelerometer values should be published in [m/s/s] in sensor frame.
-            Core::Topic<Core::Timestamped<Data::ValueCov<float, 3>>> accelTopic_;
+            Core::Topic<Core::Timestamped<DSP::ValueCov<float, 3>>> accelTopic_;
 
         public:
             /**
              * @brief Gets the accelerometer topic where new accelerometer values are published in [m/s/s] in sensor frame.
              * @returns accelerometer topic.
              */
-            Core::Topic<Core::Timestamped<Data::ValueCov<float, 3>>> &getAccelTopic();
+            Core::Topic<Core::Timestamped<DSP::ValueCov<float, 3>>> &getAccelTopic();
 
             /**
              * @brief Makes the sensor read the values and publish them to the topic.

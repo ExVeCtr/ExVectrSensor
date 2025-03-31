@@ -3,7 +3,7 @@
 
 #include "ExVectrCore/topic.hpp"
 #include "ExVectrCore/timestamped.hpp"
-#include "ExVectrData/value_covariance.hpp"
+#include "ExVectrDSP/value_covariance.hpp"
 
 namespace VCTR
 {
@@ -19,14 +19,14 @@ namespace VCTR
         {
         protected:
             /// @brief Topic to which new encoder values should be published in counts.
-            Core::Topic<Core::Timestamped<Data::ValueCov<int32_t, 1>>> encoderTopic_;
+            Core::Topic<Core::Timestamped<DSP::ValueCov<int32_t, 1>>> encoderTopic_;
 
         public:
             /**
              * @brief Gets the encoder topic where new encoder values are published in counts.
              * @returns encoder topic.
              */
-            Core::Topic<Core::Timestamped<Data::ValueCov<int32_t, 1>>> &getEncoderTopic();
+            Core::Topic<Core::Timestamped<DSP::ValueCov<int32_t, 1>>> &getEncoderTopic();
 
             /**
              * @brief Makes the sensor read the values and publish them to the topic.

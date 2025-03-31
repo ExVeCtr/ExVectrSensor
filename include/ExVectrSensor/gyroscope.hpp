@@ -3,7 +3,7 @@
 
 #include "ExVectrCore/topic.hpp"
 #include "ExVectrCore/timestamped.hpp"
-#include "ExVectrData/value_covariance.hpp"
+#include "ExVectrDSP/value_covariance.hpp"
 
 namespace VCTR
 {
@@ -18,14 +18,14 @@ namespace VCTR
         {
         protected:
             /// @brief Topic to which new gyroscope values should be published in [rad/s] in sensor frame.
-            Core::Topic<Core::Timestamped<Data::ValueCov<float, 3>>> gyroTopic_;
+            Core::Topic<Core::Timestamped<DSP::ValueCov<float, 3>>> gyroTopic_;
 
         public:
             /**
              * @brief Gets the gyroscope topic where new gyroscope values are published in [rad/s] in sensor frame.
              * @returns gyroscope topic.
              */
-            Core::Topic<Core::Timestamped<Data::ValueCov<float, 3>>> &getGyroTopic();
+            Core::Topic<Core::Timestamped<DSP::ValueCov<float, 3>>> &getGyroTopic();
 
             /**
              * @brief Makes the sensor read the values and publish them to the topic.

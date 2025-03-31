@@ -2,7 +2,7 @@
 #include "ExVectrCore/timestamped.hpp"
 #include "ExVectrCore/print.hpp"
 
-#include "ExVectrData/value_covariance.hpp"
+#include "ExVectrDSP/value_covariance.hpp"
 
 #include "ExVectrMath/matrix_base.hpp"
 
@@ -90,7 +90,7 @@ bool SNSR::QMC5883::readMag()
     int16_t y = static_cast<int16_t>(buffer[2]) | (static_cast<int16_t>(buffer[3]) << 8);
     int16_t z = static_cast<int16_t>(buffer[4]) | (static_cast<int16_t>(buffer[5]) << 8);
 
-    Core::Timestamped<Data::ValueCov<float, 3>> buf;
+    Core::Timestamped<DSP::ValueCov<float, 3>> buf;
     buf.data.val[0][0] = (float)x * 8.0f / 32767.0f;
     buf.data.val[1][0] = (float)y * 8.0f / 32767.0f;
     buf.data.val[2][0] = (float)z * 8.0f / 32767.0f;

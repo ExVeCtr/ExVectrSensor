@@ -3,7 +3,7 @@
 namespace VCTR
 {
 
-    Core::Topic<Core::Timestamped<Data::ValueCov<float, 1>>> &SNSR::Thermometer::getThermoTopic() {
+    Core::Topic<Core::Timestamped<DSP::ValueCov<float, 1>>> &SNSR::Thermometer::getThermoTopic() {
         return thermTopic_;
     }
 

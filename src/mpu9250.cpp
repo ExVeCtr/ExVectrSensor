@@ -151,14 +151,14 @@ namespace VCTR
             return false;
         }
 
-        Data::ValueCov<float, 3> gyroVals;
+        DSP::ValueCov<float, 3> gyroVals;
         gyroVals.val(0) = gyro_x_radps();
         gyroVals.val(1) = gyro_y_radps();
         gyroVals.val(2) = gyro_z_radps();
 
         gyroVals.cov = gyroVariance_;
 
-        gyroTopic_.publish(Core::Timestamped<Data::ValueCov<float, 3>>(gyroVals, time));
+        gyroTopic_.publish(Core::Timestamped<DSP::ValueCov<float, 3>>(gyroVals, time));
 
         return true;
     }
@@ -179,14 +179,14 @@ namespace VCTR
             return false;
         }
 
-        Data::ValueCov<float, 3> accelVals;
+        DSP::ValueCov<float, 3> accelVals;
         accelVals.val(0) = accel_x_mps2();
         accelVals.val(1) = accel_y_mps2();
         accelVals.val(2) = accel_z_mps2();
 
         accelVals.cov = accelVariance_;
 
-        accelTopic_.publish(Core::Timestamped<Data::ValueCov<float, 3>>(accelVals, time));
+        accelTopic_.publish(Core::Timestamped<DSP::ValueCov<float, 3>>(accelVals, time));
 
         return true;
     }
@@ -216,14 +216,14 @@ namespace VCTR
             return false;
         }
 
-        Data::ValueCov<float, 3> magVals;
+        DSP::ValueCov<float, 3> magVals;
         magVals.val(0) = mag_x_ut();
         magVals.val(1) = mag_y_ut();
         magVals.val(2) = mag_z_ut();
 
         magVals.cov = magVariance_;
 
-        magTopic_.publish(Core::Timestamped<Data::ValueCov<float, 3>>(magVals, time));
+        magTopic_.publish(Core::Timestamped<DSP::ValueCov<float, 3>>(magVals, time));
 
         return true;
     }
@@ -245,19 +245,19 @@ namespace VCTR
             return false;
         }
 
-        Data::ValueCov<float, 3> gyroVals;
+        DSP::ValueCov<float, 3> gyroVals;
         gyroVals.val(0) = gyro_x_radps();
         gyroVals.val(1) = gyro_y_radps();
         gyroVals.val(2) = gyro_z_radps();
         gyroVals.cov = gyroVariance_;
-        gyroTopic_.publish(Core::Timestamped<Data::ValueCov<float, 3>>(gyroVals, time));
+        gyroTopic_.publish(Core::Timestamped<DSP::ValueCov<float, 3>>(gyroVals, time));
 
-        Data::ValueCov<float, 3> accelVals;
+        DSP::ValueCov<float, 3> accelVals;
         accelVals.val(0) = accel_x_mps2();
         accelVals.val(1) = accel_y_mps2();
         accelVals.val(2) = accel_z_mps2();
         accelVals.cov = accelVariance_;
-        accelTopic_.publish(Core::Timestamped<Data::ValueCov<float, 3>>(accelVals, time));
+        accelTopic_.publish(Core::Timestamped<DSP::ValueCov<float, 3>>(accelVals, time));
 
         if (disableMag_)
             return true;
@@ -268,13 +268,13 @@ namespace VCTR
             return false;
         }
 
-        Data::ValueCov<float, 3> magVals;
+        DSP::ValueCov<float, 3> magVals;
         magVals.val(0) = mag_x_ut();
         magVals.val(1) = mag_y_ut();
         magVals.val(2) = mag_z_ut();
         magVals.cov = magVariance_;
 
-        magTopic_.publish(Core::Timestamped<Data::ValueCov<float, 3>>(magVals, time));
+        magTopic_.publish(Core::Timestamped<DSP::ValueCov<float, 3>>(magVals, time));
 
         return true;
     }

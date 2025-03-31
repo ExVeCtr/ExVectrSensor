@@ -1,5 +1,5 @@
-#ifndef EXVECTRDATA_H_
-#define EXVECTRDATA_H_
+#ifndef EXVECTRSENSOR_H_
+#define EXVECTRSENSOR_H_
 
 namespace VCTR
 {

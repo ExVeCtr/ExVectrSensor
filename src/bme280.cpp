@@ -202,31 +202,31 @@ bool SNSR::BME280::readSensorData()
 
     if (pressure != 0) {
 
-        Data::ValueCov<float, 1> baroVal;
+        DSP::ValueCov<float, 1> baroVal;
         baroVal.val(0) = pressure;
         baroVal.cov = 1;
 
-        baroTopic_.publish(Core::Timestamped<Data::ValueCov<float, 1>>(baroVal, time));
+        baroTopic_.publish(Core::Timestamped<DSP::ValueCov<float, 1>>(baroVal, time));
 
     }
 
     if (humidity != 0 && !noHumidity_) {
 
-        Data::ValueCov<float, 1> humVal;
+        DSP::ValueCov<float, 1> humVal;
         humVal.val(0) = humidity;
         humVal.cov = 0.5;
 
-        hygroTopic_.publish(Core::Timestamped<Data::ValueCov<float, 1>>(humVal, time));
+        hygroTopic_.publish(Core::Timestamped<DSP::ValueCov<float, 1>>(humVal, time));
 
     }
 
     if (temperature != 0) {
 
-        Data::ValueCov<float, 1> tempVal;
+        DSP::ValueCov<float, 1> tempVal;
         tempVal.val(0) = temperature;
         tempVal.cov = 0.5;
 
-        thermTopic_.publish(Core::Timestamped<Data::ValueCov<float, 1>>(tempVal, time));
+        thermTopic_.publish(Core::Timestamped<DSP::ValueCov<float, 1>>(tempVal, time));
 
     }
 

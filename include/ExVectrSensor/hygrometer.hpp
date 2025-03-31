@@ -3,7 +3,7 @@
 
 #include "ExVectrCore/topic.hpp"
 #include "ExVectrCore/timestamped.hpp"
-#include "ExVectrData/value_covariance.hpp"
+#include "ExVectrDSP/value_covariance.hpp"
 
 namespace VCTR
 {
@@ -18,14 +18,14 @@ namespace VCTR
         {
         protected:
             /// @brief Topic to which new hygrometer values should be published in degrees celsius.
-            Core::Topic<Core::Timestamped<Data::ValueCov<float, 1>>> hygroTopic_;
+            Core::Topic<Core::Timestamped<DSP::ValueCov<float, 1>>> hygroTopic_;
 
         public:
             /**
              * @brief Gets the hygrometer topic where new hygrometer values are published in degrees celsius.
              * @returns hygrometer topic.
              */
-            Core::Topic<Core::Timestamped<Data::ValueCov<float, 1>>> &getHygroTopic();
+            Core::Topic<Core::Timestamped<DSP::ValueCov<float, 1>>> &getHygroTopic();
 
             /**
              * @brief Makes the sensor read the hygrometer and publish the sensor values.

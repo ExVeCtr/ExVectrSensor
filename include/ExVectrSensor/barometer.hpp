@@ -3,7 +3,7 @@
 
 #include "ExVectrCore/topic.hpp"
 #include "ExVectrCore/timestamped.hpp"
-#include "ExVectrData/value_covariance.hpp"
+#include "ExVectrDSP/value_covariance.hpp"
 
 namespace VCTR
 {
@@ -18,14 +18,14 @@ namespace VCTR
         {
         protected:
             /// @brief Topic to which new barometer values should be published in Pascal in sensor frame.
-            Core::Topic<Core::Timestamped<Data::ValueCov<float, 1>>> baroTopic_;
+            Core::Topic<Core::Timestamped<DSP::ValueCov<float, 1>>> baroTopic_;
 
         public:
             /**
              * @brief Gets the barometer topic where new barometer values are published in Pascal in sensor frame.
              * @returns barometer topic.
              */
-            Core::Topic<Core::Timestamped<Data::ValueCov<float, 1>>> &getBaroTopic();
+            Core::Topic<Core::Timestamped<DSP::ValueCov<float, 1>>> &getBaroTopic();
 
             /**
              * @brief Makes the sensor read the barometer and publish the sensor values.

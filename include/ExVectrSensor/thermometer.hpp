@@ -3,7 +3,7 @@
 
 #include "ExVectrCore/topic.hpp"
 #include "ExVectrCore/timestamped.hpp"
-#include "ExVectrData/value_covariance.hpp"
+#include "ExVectrDSP/value_covariance.hpp"
 
 namespace VCTR
 {
@@ -18,14 +18,14 @@ namespace VCTR
         {
         protected:
             /// @brief Topic to which new thermometer values should be published in degrees celsius.
-            Core::Topic<Core::Timestamped<Data::ValueCov<float, 1>>> thermTopic_;
+            Core::Topic<Core::Timestamped<DSP::ValueCov<float, 1>>> thermTopic_;
 
         public:
             /**
              * @brief Gets the thermometer topic where new thermometer values are published in degrees celsius.
              * @returns thermometer topic.
              */
-            Core::Topic<Core::Timestamped<Data::ValueCov<float, 1>>> &getThermoTopic();
+            Core::Topic<Core::Timestamped<DSP::ValueCov<float, 1>>> &getThermoTopic();
 
             /**
              * @brief Makes the sensor read the thermometer and publish the sensor values.
