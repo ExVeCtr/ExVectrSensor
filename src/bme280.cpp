@@ -33,14 +33,14 @@ SNSR::BME280Driver::BME280Driver(HAL::DigitalIO &ioBus) : Task_Periodic("BME280 
 {
     ioBus_ = &ioBus;
     Core::getSystemScheduler().addTask(*this);
-    setPriority(1000);
+    //setPriority(1000);
 }
 
 SNSR::BME280Driver::BME280Driver(HAL::DigitalIO &ioBus, Core::Scheduler &scheduler) : Task_Periodic("BME280 Driver", 20 * Core::MILLISECONDS)
 {
     ioBus_ = &ioBus;
     scheduler.addTask(*this);
-    setPriority(1000);
+    //setPriority(1000);
 }
 
 void SNSR::BME280Driver::taskInit()
@@ -204,7 +204,7 @@ bool SNSR::BME280::readSensorData()
 
         DSP::ValueCov<float, 1> baroVal;
         baroVal.val(0) = pressure;
-        baroVal.cov = 1;
+        baroVal.cov = altCov_;
 
         baroTopic_.publish(Core::Timestamped<DSP::ValueCov<float, 1>>(baroVal, time));
 
