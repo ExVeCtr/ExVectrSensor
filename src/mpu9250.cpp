@@ -18,6 +18,8 @@
 
 #include "ExVectrHAL/io_types.hpp"
 #include "ExVectrHAL/io_params.hpp"
+#include "ExVectrHAL/pin_gpio.hpp"
+#include "ExVectrHAL/digital_io.hpp"
 
 #include "ExVectrSensor/Sensors/mpu9250.hpp"
 
@@ -31,7 +33,7 @@ namespace VCTR
         disableMag_ = disableMag;
         ioBus_ = &ioBus;
         Core::getSystemScheduler().addTask(*this);
-        setPriority(1000);
+        //setPriority(1000);
     }
 
     SNSR::MPU9250Driver::MPU9250Driver(HAL::DigitalIO &ioBus, Core::Scheduler &scheduler, bool disableMag) : Task_Periodic("MPU9250 Driver", 1 * Core::MILLISECONDS)
@@ -39,7 +41,44 @@ namespace VCTR
         disableMag_ = disableMag;
         ioBus_ = &ioBus;
         scheduler.addTask(*this);
-        setPriority(1000);
+        //setPriority(1000);
+    }
+
+    void SNSR::MPU9250Driver::taskCheck() {
+
+        if (pinInterrupt_ != nullptr) {
+            if (pinInterrupt_->getPinValue()) {
+                //setRelease(VCTR::Core::NOW());
+                setDeadline(0);
+            }
+        }
+
+    }
+
+
+    void SNSR::MPU9250Driver::enable4kHzRate() {
+        ConfigDlpf(DlpfBandwidth::DLPF_BANDWIDTH_250HZ_4kHz);
+        setInterval(250 * Core::MICROSECONDS); // 4kHz rate
+        //ConfigSrd(0);
+    }
+
+    
+    void SNSR::MPU9250Driver::enable32kHzRate() {
+        ConfigDlpf(DlpfBandwidth::DLPF_BANDWIDTH_DISABLE_32kHz);
+        setInterval(31.25f * Core::MICROSECONDS); // 32kHz rate
+        //ConfigSrd(0);
+    }
+
+
+    void SNSR::MPU9250Driver::enablePinInterrupt(HAL::PinGPIO& pin) {
+
+        pinInterrupt_ = &pin;
+        pin.init(HAL::GPIO_IOMODE_t::IOMODE_INPUT);
+
+        EnableDrdyInt();
+
+        setInterval(10 * Core::MILLISECONDS); //Make this slower since the interupt scheme should take over the timing of the sensor.
+
     }
 
     void SNSR::MPU9250Driver::taskInit()
@@ -56,7 +95,7 @@ namespace VCTR
             return;
         }
 
-        setPriority(200);
+        //setPriority(200);
     }
 
     void SNSR::MPU9250Driver::taskThread()
@@ -123,6 +162,8 @@ namespace VCTR
             VCTR::Core::printW("MPU9250 Failed to start!\n");
             return false;
         }
+
+        VRBS_MSG("MPU9250 initSensor(): Sensor started! Default settings being set to 16G, 2000DPS, 184Hz DLPF and 1kHz sample Rate.\n");
 
         EnableDrdyInt();
         ConfigAccelRange(AccelRange::ACCEL_RANGE_16G);
@@ -693,6 +734,7 @@ namespace VCTR
     {
         DlpfBandwidth requested_dlpf;
         spi_clock_ = 1000000;
+        LOG_MSG("MPU9250 ConfigDlpf(): Setting DLPF to %d\n", dlpf);
         /* Check input is valid and set requested dlpf */
         switch (dlpf)
         {
@@ -766,10 +808,12 @@ namespace VCTR
             /* Try setting the dlpf */
             if (!WriteRegister(ACCEL_CONFIG2_, requested_dlpf))
             {
+                LOG_MSG("MPU9250 could not set requested dlpf!\n");
                 return false;
             }
             if (!WriteRegister(CONFIG_, requested_dlpf))
             {
+                LOG_MSG("MPU9250 could not set requested dlpf!\n");
                 return false;
             }
         }
@@ -780,9 +824,13 @@ namespace VCTR
     bool SNSR::MPU9250::Read()
     {
         spi_clock_ = 20000000;
+        ioBus_->setOutputParam(HAL::IO_PARAM_t::SPEED, spi_clock_);
         /* Read the data registers */
         uint8_t data_buff[22];
-        if (!ReadRegisters(INT_STATUS_, sizeof(data_buff), data_buff))
+        auto ret = !ReadRegisters(INT_STATUS_, sizeof(data_buff), data_buff);
+        spi_clock_ = 1000000;
+        ioBus_->setOutputParam(HAL::IO_PARAM_t::SPEED, spi_clock_);
+        if (ret)
         {
             return false;
         }

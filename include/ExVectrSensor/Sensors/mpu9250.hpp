@@ -19,6 +19,7 @@
 #include "ExVectrCore/task_types.hpp"
 #include "ExVectrCore/scheduler2.hpp"
 
+#include "ExVectrHAL/pin_gpio.hpp"
 #include "ExVectrHAL/digital_io.hpp"
 
 #include "../gyroscope.hpp"
@@ -45,7 +46,7 @@ namespace VCTR
             bool disableMag_ = false;
 
             static constexpr float gyroVariance_ = 0.002;
-            static constexpr float accelVariance_ = 0.08;
+            static constexpr float accelVariance_ = 0.78;
             static constexpr float magVariance_ = 1;
 
         public:
@@ -113,15 +114,6 @@ namespace VCTR
              */
             bool readAll();
 
-        protected:
-            /**
-             * Below are all registers and extra functions.
-             */
-            bool Begin(bool disableMag = false);
-            bool MagnetometerFailed() { return akFailure_; }
-            bool IMUFailed() { return mpuFailure_ || akFailure_; }
-            bool EnableDrdyInt();
-            bool DisableDrdyInt();
             bool ConfigAccelRange(const AccelRange range);
             inline AccelRange accel_range() const { return accel_range_; }
             bool ConfigGyroRange(const GyroRange range);
@@ -130,6 +122,17 @@ namespace VCTR
             inline uint8_t srd() const { return srd_; }
             bool ConfigDlpf(const DlpfBandwidth dlpf);
             inline DlpfBandwidth dlpf() const { return dlpf_bandwidth_; }
+
+            bool MagnetometerFailed() { return akFailure_; }
+            bool IMUFailed() { return mpuFailure_ || akFailure_; }
+
+        protected:
+            /**
+             * Below are all registers and extra functions.
+             */
+            bool Begin(bool disableMag = false);
+            bool EnableDrdyInt();
+            bool DisableDrdyInt();
             bool Read();
             inline float accel_x_mps2() const { return accel_mps2_[0]; }
             inline float accel_y_mps2() const { return accel_mps2_[1]; }
@@ -211,6 +214,11 @@ namespace VCTR
          * @brief This class uses tasks to automatically init and read the sensor. 
          */
         class MPU9250Driver: public MPU9250, public Core::Task_Periodic {
+        private:
+
+            HAL::PinGPIO* pinInterrupt_ = nullptr;
+
+
         public: 
 
             /**
@@ -227,6 +235,31 @@ namespace VCTR
              * @param disableMag If true then mag will be disabled and not used.
              */
             MPU9250Driver(HAL::DigitalIO &ioBus, Core::Scheduler& scheduler, bool disableMag = false);
+
+            /**
+             * * @brief Enables the reading of a given pin to check if the sensor is ready to read data.
+             * * @param pin The pin to enable the interrupt on.
+             */
+            void enablePinInterrupt(HAL::PinGPIO& pin);
+
+            /**
+             * @brief Enables the sensor to read at 4kHz rate.
+             * @note This is not the default setting and should be used with caution. Can be too fast for some filters.
+             * @note This will set the DLPF to 250Hz and the sample rate to 4kHz.
+             */
+            void enable4kHzRate();
+
+            /**
+             * @brief Enables the sensor to read at 32kHz rate.
+             * @note This is not the default setting and should be used with caution. Is extremely fast for most filters.
+             * @note This will disable the DLPF and the sample rate to 32kHz.
+             */
+            void enable32kHzRate();
+            
+            /**
+             * Checks of the sensor is ready to be read.
+             */
+            void taskCheck() override;
 
             /**
              * @brief Initialises sensor and expected to be called once at start by scheduler
