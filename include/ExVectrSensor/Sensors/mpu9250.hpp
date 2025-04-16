@@ -21,7 +21,9 @@
 
 #include "ExVectrHAL/pin_gpio.hpp"
 #include "ExVectrHAL/digital_io.hpp"
+#include "ExVectrHAL/interrupt_event.hpp"
 
+#include "../thermometer.hpp"
 #include "../gyroscope.hpp"
 #include "../accelerometer.hpp"
 #include "../magnetometer.hpp"
@@ -36,7 +38,7 @@ namespace VCTR
          * @brief A class implementing control for the MPU9250 9dof sensor. The MPU9250 has a Gyroscope, accelerometer and magnetometer.
          * @note Currently the magnetometer is not implemented.
          */
-        class MPU9250 : public Gyroscope, public Accelerometer, public Magnetometer
+        class MPU9250 : public Gyroscope, public Accelerometer, public Magnetometer, public Thermometer
         {
         protected:
             HAL::DigitalIO *ioBus_ = nullptr;
@@ -48,6 +50,7 @@ namespace VCTR
             static constexpr float gyroVariance_ = 0.002;
             static constexpr float accelVariance_ = 0.78;
             static constexpr float magVariance_ = 1;
+            static constexpr float thermVariance_ = 0.5;
 
         public:
             enum DlpfBandwidth : uint8_t
@@ -109,6 +112,12 @@ namespace VCTR
             bool readMag() override;
 
             /**
+             * @brief Implements reading IMU temperature values and publishing them to the topic. These can be used to control the IMU temperature for better accuracy.
+             * @return true if successful, false otherwise.
+             */
+            bool readTherm() override;
+
+            /**
              * @brief Makes sensor read and publish gyro, accel and magnetometer values.
              * @returns true if all could be read, false if one or more failed.
              */
@@ -126,13 +135,17 @@ namespace VCTR
             bool MagnetometerFailed() { return akFailure_; }
             bool IMUFailed() { return mpuFailure_ || akFailure_; }
 
+            bool EnableDrdyInt();
+            bool DisableDrdyInt();
+
         protected:
+
+            int64_t realMeasurentTimestamp_ = 0; // Last time the sensor was read. Set this to 0 after reading data. Interrupts will update this. 
+            
             /**
              * Below are all registers and extra functions.
              */
             bool Begin(bool disableMag = false);
-            bool EnableDrdyInt();
-            bool DisableDrdyInt();
             bool Read();
             inline float accel_x_mps2() const { return accel_mps2_[0]; }
             inline float accel_y_mps2() const { return accel_mps2_[1]; }
@@ -144,6 +157,8 @@ namespace VCTR
             inline float mag_y_ut() const { return mag_ut_[1]; }
             inline float mag_z_ut() const { return mag_ut_[2]; }
             inline float die_temperature_c() const { return die_temperature_c_; }
+            // Gets the most accurate timing for the measurement.
+            //int64_t getRealMeasurementTimestamp();
 
             /* Configuration */
             static constexpr uint8_t SPI_READ_ = 0x80;
@@ -218,7 +233,6 @@ namespace VCTR
 
             HAL::PinGPIO* pinInterrupt_ = nullptr;
 
-
         public: 
 
             /**
@@ -237,10 +251,9 @@ namespace VCTR
             MPU9250Driver(HAL::DigitalIO &ioBus, Core::Scheduler& scheduler, bool disableMag = false);
 
             /**
-             * * @brief Enables the reading of a given pin to check if the sensor is ready to read data.
-             * * @param pin The pin to enable the interrupt on.
+             * * @brief Attach this function to an interrupt event object for more accurate timing measurements.
              */
-            void enablePinInterrupt(HAL::PinGPIO& pin);
+            void interruptHandler();
 
             /**
              * @brief Enables the sensor to read at 4kHz rate.

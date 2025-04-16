@@ -70,14 +70,9 @@ namespace VCTR
     }
 
 
-    void SNSR::MPU9250Driver::enablePinInterrupt(HAL::PinGPIO& pin) {
+    void SNSR::MPU9250Driver::interruptHandler() {
 
-        pinInterrupt_ = &pin;
-        pin.init(HAL::GPIO_IOMODE_t::IOMODE_INPUT);
-
-        EnableDrdyInt();
-
-        setInterval(10 * Core::MILLISECONDS); //Make this slower since the interupt scheme should take over the timing of the sensor.
+        realMeasurentTimestamp_ = VCTR::Core::NOW();
 
     }
 
@@ -269,6 +264,31 @@ namespace VCTR
         return true;
     }
 
+    bool SNSR::MPU9250::readTherm() 
+    {
+        if (!initialised_)
+        {
+            VCTR::Core::printE("MPU9250 readTherm(): class not yet initialised!\n");
+            return false;
+        }
+
+        int64_t time = VCTR::Core::NOW();
+
+        if (!Read())
+        {
+            VCTR::Core::printW("MPU9250 readTherm(): Something went wrong reading sensor values!\n");
+            return false;
+        }
+
+        DSP::ValueCov<float, 1> thermVals;
+        thermVals.val(0) = die_temperature_c();
+        thermVals.cov = thermVariance_;
+
+        thermTopic_.publish(Core::Timestamped<DSP::ValueCov<float, 1>>(thermVals, time));
+
+        return true;
+    }
+
     bool SNSR::MPU9250::readAll()
     {
 
@@ -279,6 +299,12 @@ namespace VCTR
         }
 
         int64_t time = VCTR::Core::NOW();
+        if (realMeasurentTimestamp_ != 0)
+        {
+            time = realMeasurentTimestamp_;
+            realMeasurentTimestamp_ = 0;
+            //LOG_MSG("Using interrupt time!\n");
+        }
 
         if (!Read())
         {
@@ -299,6 +325,11 @@ namespace VCTR
         accelVals.val(2) = accel_z_mps2();
         accelVals.cov = accelVariance_;
         accelTopic_.publish(Core::Timestamped<DSP::ValueCov<float, 3>>(accelVals, time));
+
+        DSP::ValueCov<float, 1> thermVals;
+        thermVals.val(0) = die_temperature_c();
+        thermVals.cov = thermVariance_;
+        thermTopic_.publish(Core::Timestamped<DSP::ValueCov<float, 1>>(thermVals, time));
 
         if (disableMag_)
             return true;
