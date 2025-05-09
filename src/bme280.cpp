@@ -29,14 +29,10 @@ using namespace VCTR;
 
 // ### Below is MPU9250Driver Implementation ###
 
-SNSR::BME280Driver::BME280Driver(HAL::DigitalIO &ioBus) : Task_Periodic("BME280 Driver", 20 * Core::MILLISECONDS)
-{
-    ioBus_ = &ioBus;
-    Core::getSystemScheduler().addTask(*this);
-    //setPriority(1000);
-}
+SNSR::BME280Driver::BME280Driver(HAL::DigitalIO &ioBus) : BME280Driver(ioBus, Core::getSystemScheduler())
+{}
 
-SNSR::BME280Driver::BME280Driver(HAL::DigitalIO &ioBus, Core::Scheduler &scheduler) : Task_Periodic("BME280 Driver", 20 * Core::MILLISECONDS)
+SNSR::BME280Driver::BME280Driver(HAL::DigitalIO &ioBus, Core::Scheduler &scheduler) : Task_Periodic("BME280 Driver", 50 * Core::MILLISECONDS)
 {
     ioBus_ = &ioBus;
     scheduler.addTask(*this);
@@ -47,12 +43,12 @@ void SNSR::BME280Driver::taskInit()
 {
     if (ioBus_ == nullptr)
     {
-        Core::printE("BME280 Driver taskInit(): ioBus is a nullptr. Give the constructor the iobus connected with the sensor!\n");
+        LOG_MSG("ioBus is a nullptr. Give the constructor the iobus connected with the sensor!\n");
         return;
     }
     if (!initSensor(*ioBus_))
     {
-        Core::printE("BME280 Driver taskInit(): failed to init sensor!\n");
+        LOG_MSG("failed to init sensor!\n");
         return;
     }
 }
@@ -61,7 +57,8 @@ void SNSR::BME280Driver::taskThread()
 {
     if (!initialised_)
     {
-        Core::printE("BME280 Driver taskThread(): sensor is not initialised!\n");
+        LOG_MSG("BME280 is not initialised!\n");
+        setPaused(true);
         return;
     }
     readBaro();
@@ -81,8 +78,8 @@ SNSR::BME280::BME280(void)
     settings.tStandby = 0; // 0.5ms
     settings.filter = 1;   // Filter off
     settings.tempOverSample = 16;
-    settings.pressOverSample = 4;
-    settings.humidOverSample = 16;
+    settings.pressOverSample = 16;
+    settings.humidOverSample = 0;
     settings.tempCorrection = 0.f; // correction of temperature - added to the result
 }
 

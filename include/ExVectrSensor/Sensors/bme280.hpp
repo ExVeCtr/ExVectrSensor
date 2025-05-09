@@ -153,7 +153,7 @@ namespace VCTR
 
             float presOffset_ = 0.0;
 
-            float altCov_ = 0.3; // Default value for altitude covariance in meters
+            float altCov_ = 1; // Default value for altitude covariance in meters
 
         public:
             // Constructor generates default BME280_SensorSettings.
