@@ -31,17 +31,17 @@ void SNSR::QMC5883Driver::taskInit()
 {
     if (ioBus_ == nullptr)
     {
-        Core::printE("QMC5883 Driver taskInit(): ioBus is a nullptr. Give the constructor the iobus connected with the sensor!\n");
+        LOG_MSG("ioBus is a nullptr. Give the constructor the iobus connected with the sensor!\n");
         return;
     }
     if (!initSensor(*ioBus_))
     {
-        Core::printE("QMC5883 Driver taskInit(): failed to init sensor!\n");
+        LOG_MSG("failed to init sensor!\n");
         return;
     }
     else
     {
-        Core::printD("QMC5883 Driver taskInit(): sensor start successful!\n");
+        LOG_MSG("sensor start successful!\n");
     }
 }
 
@@ -49,10 +49,15 @@ void SNSR::QMC5883Driver::taskThread()
 {
     if (!initialised_)
     {
-        Core::printE("QMC5883 Driver taskThread(): sensor is not initialised!\n");
+        LOG_MSG("sensor is not initialised!\n");
         return;
     }
     readMag();
+    if (Core::NOW() - lastSensorData_ > 500 * Core::MILLISECONDS)
+    {
+        LOG_MSG("no data available for more than 100ms! Something has failed! Restarting sensor!\n");
+        setInitialised(false);
+    }
 }
 
 bool SNSR::QMC5883::readMag()
@@ -60,17 +65,17 @@ bool SNSR::QMC5883::readMag()
 
     if (!initialised_)
     {
-        Core::printW("QMC5883 readMag(): sensor not yet initialised!\n");
+        LOG_MSG("sensor not yet initialised!\n");
         return false;
     }
 
     if (!dataAvailable())
     {
 
-        if (Core::NOW() - lastSensorData_ > 500 * Core::MILLISECONDS)
+        /*if (Core::NOW() - lastSensorData_ > 500 * Core::MILLISECONDS)
         {
-            Core::printW("QMC5883 readMag(): no data available for more than 100ms! Something has failed!\n");
-        }
+            LOG_MSG("no data available for more than 100ms! Something has failed!\n");
+        }*/
 
         return false;
     }
@@ -82,7 +87,7 @@ bool SNSR::QMC5883::readMag()
     if (ioBus_->readData(buffer, 6) != 6)
     {
 
-        Core::printE("QMC5883 readMag(): failed to read from QMC5883L_X_LSB register!\n");
+        LOG_MSG("failed to read from QMC5883L_X_LSB register!\n");
         return false;
     }
 
@@ -107,7 +112,7 @@ bool SNSR::QMC5883::dataAvailable()
 
     if (!initialised_)
     {
-        Core::printW("QMC5883 dataAvailable(): sensor not yet initialised!\n");
+        LOG_MSG("sensor not yet initialised!\n");
         return false;
     }
 
@@ -115,7 +120,7 @@ bool SNSR::QMC5883::dataAvailable()
     !ioBus_->writeByte(QMC5883L_STATUS, false);
     if (!ioBus_->readByte(byte))
     {
-        Core::printE("QMC5883 dataAvailable(): failed to read from QMC5883L_STATUS register!\n");
+        LOG_MSG("failed to read from QMC5883L_STATUS register!\n");
         return false;
     }
 
@@ -129,13 +134,13 @@ bool SNSR::QMC5883::initSensor(HAL::DigitalIO &ioBus)
 
     if (ioBus.getInputType() != HAL::IO_TYPE_t::BUS_I2C)
     {
-        VCTR::Core::printE("QMC5883 given incorrect input type. Must be I2C. Given type: %d.\n", ioBus.getInputType());
+        LOG_MSG("QMC5883 given incorrect input type. Must be I2C. Given type: %d.\n", ioBus.getInputType());
         return false;
     }
 
     if (ioBus.getOutputType() != HAL::IO_TYPE_t::BUS_I2C)
     {
-        VCTR::Core::printE("QMC5883 given incorrect output type. Must be I2C. Given type: %d.\n", ioBus.getOutputType());
+        LOG_MSG("QMC5883 given incorrect output type. Must be I2C. Given type: %d.\n", ioBus.getOutputType());
         return false;
     }
 
@@ -149,7 +154,7 @@ bool SNSR::QMC5883::initSensor(HAL::DigitalIO &ioBus)
 
     if (b != 0xFF)
     {
-        Core::printE("QMC5883 initSensor(): chip ID was wrong, Usually a connection or setting error! ID was: %d\n", b);
+        LOG_MSG("chip ID was wrong, Usually a connection or setting error! ID was: %d\n", b);
         return false;
     }
 
@@ -166,7 +171,7 @@ bool SNSR::QMC5883::initSensor(HAL::DigitalIO &ioBus)
 
     if (writeError)
     {
-        Core::printE("BME280: Init write failed! Code: %d\n", writeError);
+        LOG_MSG("Init write failed! Code: %d\n", writeError);
         return false;
     }
 
