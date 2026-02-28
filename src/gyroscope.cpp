@@ -1,10 +1,7 @@
 #include "ExVectrSensor/gyroscope.hpp"
 
-namespace VCTR
-{
+namespace VCTR::sensor {
 
-    Core::Topic<Core::Timestamped<DSP::ValueCov<float, 3>>> &SNSR::Gyroscope::getGyroTopic() {
-        return gyroTopic_;
-    }
+Core::Topic<GyroDataStamped> &Gyroscope::getGyroTopic() { return gyroTopic_; }
 
-}
+} // namespace VCTR::sensor

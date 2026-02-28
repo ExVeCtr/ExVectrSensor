@@ -1,10 +1,9 @@
 #include "ExVectrSensor/accelerometer.hpp"
 
-namespace VCTR
-{
+namespace VCTR::sensor {
 
-    Core::Topic<Core::Timestamped<DSP::ValueCov<float, 3>>> &SNSR::Accelerometer::getAccelTopic() {
-        return accelTopic_;
-    }
-
+Core::Topic<AccelDataStamped> &Accelerometer::getAccelTopic() {
+  return accelTopic_;
 }
+
+} // namespace VCTR::sensor

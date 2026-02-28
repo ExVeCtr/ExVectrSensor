@@ -1,10 +1,9 @@
 #include "ExVectrSensor/encoder.hpp"
 
-namespace VCTR
-{
+namespace VCTR::sensor {
 
-    Core::Topic<Core::Timestamped<DSP::ValueCov<int32_t, 1>>> &SNSR::Encoder::getEncoderTopic() {
-        return encoderTopic_;
-    }
-
+Core::Topic<EncoderDataStamped> &Encoder::getEncoderTopic() {
+  return encoderTopic_;
 }
+
+} // namespace VCTR::sensor

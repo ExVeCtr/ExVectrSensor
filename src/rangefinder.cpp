@@ -1,11 +1,9 @@
 #include "ExVectrSensor/rangefinder.hpp"
 
-namespace VCTR
-{
+namespace VCTR::sensor {
 
-    Core::Topic<Core::Timestamped<DSP::ValueCov<float, 1>>> &SNSR::RangeFinder::getRangeTopic()
-    {
-        return rangeTopic_;
-    }
-
+Core::Topic<RangeDataStamped> &RangeFinder::getRangeTopic() {
+  return rangeTopic_;
 }
+
+} // namespace VCTR::sensor

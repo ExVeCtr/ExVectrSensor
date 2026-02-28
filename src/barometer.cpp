@@ -1,10 +1,7 @@
 #include "ExVectrSensor/barometer.hpp"
 
-namespace VCTR
-{
+namespace VCTR::sensor {
 
-    Core::Topic<Core::Timestamped<DSP::ValueCov<float, 1>>> &SNSR::Barometer::getBaroTopic() {
-        return baroTopic_;
-    }
+Core::Topic<BaroDataStamped> &Barometer::getBaroTopic() { return baroTopic_; }
 
-}
+} // namespace VCTR::sensor

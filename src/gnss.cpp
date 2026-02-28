@@ -1,10 +1,7 @@
 #include "ExVectrSensor/gnss.hpp"
 
-namespace VCTR
-{
+namespace VCTR::sensor {
 
-    Core::Topic<Core::Timestamped<SNSR::GNSSData>> &SNSR::GNSS::getGNSSTopic() {
-        return gnssTopic_;
-    }
+Core::Topic<GNSSDataStamped> &GNSS::getGNSSTopic() { return gnssTopic_; }
 
-}
+} // namespace VCTR::sensor

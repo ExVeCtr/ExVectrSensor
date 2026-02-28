@@ -1,181 +1,174 @@
+#include "ExVectrCore/print.hpp"
 #include "ExVectrCore/time_definitions.hpp"
 #include "ExVectrCore/timestamped.hpp"
-#include "ExVectrCore/print.hpp"
 
 #include "ExVectrDSP/value_covariance.hpp"
 
 #include "ExVectrMath/matrix_base.hpp"
 
-#include "ExVectrHAL/io_types.hpp"
 #include "ExVectrHAL/io_params.hpp"
+#include "ExVectrHAL/io_types.hpp"
 
 #include "ExVectrSensor/Sensors/qmc5883.hpp"
 
-using namespace VCTR;
+using namespace VCTR::sensor::sensors;
 
-SNSR::QMC5883Driver::QMC5883Driver(HAL::DigitalIO &ioBus) : Task_Periodic("QMC5883 Driver", 20 * Core::MILLISECONDS)
-{
-    ioBus_ = &ioBus;
-    Core::getSystemScheduler().addTask(*this);
-    // setPriority(1000);
+QMC5883Driver::QMC5883Driver(HAL::DigitalIO &ioBus)
+    : Task_Periodic("QMC5883 Driver", 20 * Core::MILLISECONDS) {
+  ioBus_ = &ioBus;
+  Core::getSystemScheduler().addTask(*this);
+  // setPriority(1000);
 }
 
-SNSR::QMC5883Driver::QMC5883Driver(HAL::DigitalIO &ioBus, Core::Scheduler &scheduler) : Task_Periodic("QMC5883 Driver", 20 * Core::MILLISECONDS)
-{
-    ioBus_ = &ioBus;
-    scheduler.addTask(*this);
-    // setPriority(1000);
+QMC5883Driver::QMC5883Driver(HAL::DigitalIO &ioBus, Core::Scheduler &scheduler)
+    : Task_Periodic("QMC5883 Driver", 20 * Core::MILLISECONDS) {
+  ioBus_ = &ioBus;
+  scheduler.addTask(*this);
+  // setPriority(1000);
 }
 
-void SNSR::QMC5883Driver::taskInit()
-{
-    if (ioBus_ == nullptr)
-    {
-        LOG_MSG("ioBus is a nullptr. Give the constructor the iobus connected with the sensor!\n");
-        return;
-    }
-    if (!initSensor(*ioBus_))
-    {
-        LOG_MSG("failed to init sensor!\n");
-        return;
-    }
-    else
-    {
-        LOG_MSG("sensor start successful!\n");
-    }
+void QMC5883Driver::taskInit() {
+  if (ioBus_ == nullptr) {
+    LOG_MSG("ioBus is a nullptr. Give the constructor the iobus connected with "
+            "the sensor!\n");
+    return;
+  }
+  if (!initSensor(*ioBus_)) {
+    LOG_MSG("failed to init sensor!\n");
+    return;
+  } else {
+    LOG_MSG("sensor start successful!\n");
+  }
 }
 
-void SNSR::QMC5883Driver::taskThread()
-{
-    if (!initialised_)
-    {
-        LOG_MSG("sensor is not initialised!\n");
-        return;
-    }
-    readMag();
-    if (Core::NOW() - lastSensorData_ > 500 * Core::MILLISECONDS)
-    {
-        LOG_MSG("no data available for more than 100ms! Something has failed! Restarting sensor!\n");
-        setInitialised(false);
-    }
+void QMC5883Driver::taskThread() {
+  if (!initialised_) {
+    LOG_MSG("sensor is not initialised!\n");
+    return;
+  }
+  readMag();
+  if (Core::NOW() - lastSensorData_ > 500 * Core::MILLISECONDS) {
+    LOG_MSG("no data available for more than 100ms! Something has failed! "
+            "Restarting sensor!\n");
+    setInitialised(false);
+  }
 }
 
-bool SNSR::QMC5883::readMag()
-{
+bool QMC5883::readMag() {
 
-    if (!initialised_)
+  if (!initialised_) {
+    LOG_MSG("sensor not yet initialised!\n");
+    return false;
+  }
+
+  if (!dataAvailable()) {
+
+    /*if (Core::NOW() - lastSensorData_ > 500 * Core::MILLISECONDS)
     {
-        LOG_MSG("sensor not yet initialised!\n");
-        return false;
-    }
+        LOG_MSG("no data available for more than 100ms! Something has
+    failed!\n");
+    }*/
 
-    if (!dataAvailable())
-    {
+    return false;
+  }
 
-        /*if (Core::NOW() - lastSensorData_ > 500 * Core::MILLISECONDS)
-        {
-            LOG_MSG("no data available for more than 100ms! Something has failed!\n");
-        }*/
+  int64_t time = lastSensorData_ = Core::NOW();
+  uint8_t buffer[6];
 
-        return false;
-    }
+  !ioBus_->writeByte(QMC5883L_X_LSB, false);
+  if (ioBus_->readData(buffer, 6) != 6) {
 
-    int64_t time = lastSensorData_ = Core::NOW();
-    uint8_t buffer[6];
+    LOG_MSG("failed to read from QMC5883L_X_LSB register!\n");
+    return false;
+  }
 
-    !ioBus_->writeByte(QMC5883L_X_LSB, false);
-    if (ioBus_->readData(buffer, 6) != 6)
-    {
+  int16_t x =
+      static_cast<int16_t>(buffer[0]) | (static_cast<int16_t>(buffer[1]) << 8);
+  int16_t y =
+      static_cast<int16_t>(buffer[2]) | (static_cast<int16_t>(buffer[3]) << 8);
+  int16_t z =
+      static_cast<int16_t>(buffer[4]) | (static_cast<int16_t>(buffer[5]) << 8);
 
-        LOG_MSG("failed to read from QMC5883L_X_LSB register!\n");
-        return false;
-    }
+  Core::Timestamped<DSP::ValueCov<float, 3>> buf;
+  buf.data.val[0][0] = (float)x * 8.0f / 32767.0f;
+  buf.data.val[1][0] = (float)y * 8.0f / 32767.0f;
+  buf.data.val[2][0] = (float)z * 8.0f / 32767.0f;
+  buf.data.cov = Math::Matrix<float, 3, 3>::eye(cov_);
+  buf.timestamp = time;
 
-    int16_t x = static_cast<int16_t>(buffer[0]) | (static_cast<int16_t>(buffer[1]) << 8);
-    int16_t y = static_cast<int16_t>(buffer[2]) | (static_cast<int16_t>(buffer[3]) << 8);
-    int16_t z = static_cast<int16_t>(buffer[4]) | (static_cast<int16_t>(buffer[5]) << 8);
+  magTopic_.publish(buf);
 
-    Core::Timestamped<DSP::ValueCov<float, 3>> buf;
-    buf.data.val[0][0] = (float)x * 8.0f / 32767.0f;
-    buf.data.val[1][0] = (float)y * 8.0f / 32767.0f;
-    buf.data.val[2][0] = (float)z * 8.0f / 32767.0f;
-    buf.data.cov = Math::Matrix<float, 3, 3>::eye(cov_);
-    buf.timestamp = time;
-
-    magTopic_.publish(buf);
-
-    return true;
+  return true;
 }
 
-bool SNSR::QMC5883::dataAvailable()
-{
+bool QMC5883::dataAvailable() {
 
-    if (!initialised_)
-    {
-        LOG_MSG("sensor not yet initialised!\n");
-        return false;
-    }
+  if (!initialised_) {
+    LOG_MSG("sensor not yet initialised!\n");
+    return false;
+  }
 
-    uint8_t byte = 0;
-    !ioBus_->writeByte(QMC5883L_STATUS, false);
-    if (!ioBus_->readByte(byte))
-    {
-        LOG_MSG("failed to read from QMC5883L_STATUS register!\n");
-        return false;
-    }
+  uint8_t byte = 0;
+  !ioBus_->writeByte(QMC5883L_STATUS, false);
+  if (!ioBus_->readByte(byte)) {
+    LOG_MSG("failed to read from QMC5883L_STATUS register!\n");
+    return false;
+  }
 
-    return (byte & 0b00000001) == 0b00000001;
+  return (byte & 0b00000001) == 0b00000001;
 }
 
-bool SNSR::QMC5883::initSensor(HAL::DigitalIO &ioBus)
-{
+bool QMC5883::initSensor(HAL::DigitalIO &ioBus) {
 
-    lastSensorData_ = Core::NOW();
+  lastSensorData_ = Core::NOW();
 
-    if (ioBus.getInputType() != HAL::IO_TYPE_t::BUS_I2C)
-    {
-        LOG_MSG("QMC5883 given incorrect input type. Must be I2C. Given type: %d.\n", ioBus.getInputType());
-        return false;
-    }
+  if (ioBus.getInputType() != HAL::IO_TYPE_t::BUS_I2C) {
+    LOG_MSG(
+        "QMC5883 given incorrect input type. Must be I2C. Given type: %d.\n",
+        ioBus.getInputType());
+    return false;
+  }
 
-    if (ioBus.getOutputType() != HAL::IO_TYPE_t::BUS_I2C)
-    {
-        LOG_MSG("QMC5883 given incorrect output type. Must be I2C. Given type: %d.\n", ioBus.getOutputType());
-        return false;
-    }
+  if (ioBus.getOutputType() != HAL::IO_TYPE_t::BUS_I2C) {
+    LOG_MSG(
+        "QMC5883 given incorrect output type. Must be I2C. Given type: %d.\n",
+        ioBus.getOutputType());
+    return false;
+  }
 
-    ioBus_ = &ioBus;
+  ioBus_ = &ioBus;
 
-    uint16_t writeError = false;
+  uint16_t writeError = false;
 
-    uint8_t b = 0;
-    writeError |= !ioBus_->writeByte(QMC5883L_CHIP_ID, false); // Read chip ID
-    writeError |= !ioBus_->readByte(b) << 1;
+  uint8_t b = 0;
+  writeError |= !ioBus_->writeByte(QMC5883L_CHIP_ID, false); // Read chip ID
+  writeError |= !ioBus_->readByte(b) << 1;
 
-    if (b != 0xFF)
-    {
-        LOG_MSG("chip ID was wrong, Usually a connection or setting error! ID was: %d\n", b);
-        return false;
-    }
+  if (b != 0xFF) {
+    LOG_MSG("chip ID was wrong, Usually a connection or setting error! ID was: "
+            "%d\n",
+            b);
+    return false;
+  }
 
-    writeError |= !ioBus_->writeByte(QMC5883L_CONFIG2, false) << 2; // Do software reset
-    writeError |= !ioBus_->writeByte(0b10000000) << 3;
+  writeError |= !ioBus_->writeByte(QMC5883L_CONFIG2, false)
+                << 2; // Do software reset
+  writeError |= !ioBus_->writeByte(0b10000000) << 3;
 
-    Core::delay(10 * Core::MILLISECONDS);
+  Core::delay(10 * Core::MILLISECONDS);
 
-    writeError |= !ioBus_->writeByte(QMC5883L_RESET, false) << 4; 
-    writeError |= !ioBus_->writeByte(0x01) << 5;
+  writeError |= !ioBus_->writeByte(QMC5883L_RESET, false) << 4;
+  writeError |= !ioBus_->writeByte(0x01) << 5;
 
-    writeError |= !ioBus_->writeByte(QMC5883L_CONFIG, false) << 6;
-    writeError |= !ioBus_->writeByte(0b00011101) << 7; 
+  writeError |= !ioBus_->writeByte(QMC5883L_CONFIG, false) << 6;
+  writeError |= !ioBus_->writeByte(0b00011101) << 7;
 
-    if (writeError)
-    {
-        LOG_MSG("Init write failed! Code: %d\n", writeError);
-        return false;
-    }
+  if (writeError) {
+    LOG_MSG("Init write failed! Code: %d\n", writeError);
+    return false;
+  }
 
-    initialised_ = true;
+  initialised_ = true;
 
-    return true;
+  return true;
 }

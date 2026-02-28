@@ -1,10 +1,7 @@
 #include "ExVectrSensor/magnetometer.hpp"
 
-namespace VCTR
-{
+namespace VCTR::sensor {
 
-    Core::Topic<Core::Timestamped<DSP::ValueCov<float, 3>>> &SNSR::Magnetometer::getMagTopic() {
-        return magTopic_;
-    }
+Core::Topic<MagDataStamped> &Magnetometer::getMagTopic() { return magTopic_; }
 
-}
+} // namespace VCTR::sensor

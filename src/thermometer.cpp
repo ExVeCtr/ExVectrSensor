@@ -1,10 +1,9 @@
 #include "ExVectrSensor/thermometer.hpp"
 
-namespace VCTR
-{
+namespace VCTR::sensor {
 
-    Core::Topic<Core::Timestamped<DSP::ValueCov<float, 1>>> &SNSR::Thermometer::getThermoTopic() {
-        return thermTopic_;
-    }
-
+Core::Topic<ThermoDataStamped> &Thermometer::getThermoTopic() {
+  return thermTopic_;
 }
+
+} // namespace VCTR::sensor
